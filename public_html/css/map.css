@@ -5,15 +5,31 @@ svg.map {
     margin: 8px;
 }
 
-.taiwan {
+g.taiwan {
     stroke: none;
     fill: green;
-}
-
-.village {
-    stroke: white;
-    stroke-width: 0.03px;
     stroke-linecap: round;
     stroke-linejoin: round;
+}
+
+g.county {
+    stroke: white;
+    stroke-width: 1px;
+    fill:none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+g.district {
+    stroke: white;
+    stroke-width: 0.3px;
     fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+g.village {
+    display: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }

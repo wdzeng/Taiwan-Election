@@ -23,7 +23,7 @@
 <body>
     <header>
     </header>
-    
+
     <main>
         <section>
             <div class="container">
@@ -34,7 +34,7 @@
             </div>
         </section>
     </main>
-    
+
     <footer>
     </footer>
 
@@ -46,7 +46,12 @@
 
     <script>
         "use strict";
-        drawMaps([d3.select('#map1'), d3.select('#map2')]);
+        drawMap(d3.selectAll('svg'));
+        bindZoom(d3.selectAll('svg'));
+
+        document.getElementById("map1").onwheel = function (event) {
+            event.preventDefault();
+        };
     </script>
 </body>
 
