@@ -1,14 +1,15 @@
+"use strict";
 const file = '../res/topojson/2.json';
 
-function drawMaps(dSvgs, topoData, zoomable = true) {
+function drawMaps(dSvgs, zoomable = true, topoData) {
     if (!topoData) {
         d3.json(file).then(topoData => { drawMaps(dSvgs, topoData, zoomable) });
         return;
     }
-    dSvg.forEach(dSvg => drawMap(dSvg, topoData, zoomable));
+    dSvgs.forEach(dSvg => drawMap(dSvg, topoData, zoomable));
 }
 
-function drawMap(dSvg, topoData, zoomable = true) {
+function drawMap(dSvg, zoomable = true, topoData) {
 
     let sc = scale(dSvg);
     if (!topoData) {
@@ -26,8 +27,7 @@ function drawMap(dSvg, topoData, zoomable = true) {
     let renderer = d3.geoPath().projection(proj);
 
     // Draw on map
-    let dC = dSvg.append('g')
-        .attr('class', 'container');
+    let dC = dSvg.append('g');
     dC.append('g')
         .attr('class', 'taiwan')
         .append('path')

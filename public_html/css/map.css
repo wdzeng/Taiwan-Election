@@ -1,0 +1,19 @@
+svg.map {
+    width: 482px;
+    height: 640px;
+    border: 2px solid black;
+    margin: 8px;
+}
+
+.taiwan {
+    stroke: none;
+    fill: green;
+}
+
+.village {
+    stroke: white;
+    stroke-width: 0.03px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+}
