@@ -48,11 +48,7 @@
     <script>
         "use strict";
         drawMap(d3.selectAll('svg'));
-        bindZoom(d3.selectAll('svg'));
-
-        document.getElementById("map1").onwheel = function (event) {
-            event.preventDefault();
-        };
+        bindZoom($('.map'));
     </script>
 </body>
 

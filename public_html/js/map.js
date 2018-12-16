@@ -62,21 +62,37 @@ function drawMap(dSvg, topoData) {
 
 }
 
-function bindZoom(dSvgs) {
-    let $e = $(dSvgs.node());
-    let zoom = d3.zoom()
-        .on("zoom", () => {
-            let dRoots = dSvgs.selectAll('.map-root');
-            dRoots.attr("transform", d3.event.transform)
-            dRoots.classed('hide', d3.event.transform.k < 3);
-        })
-        .scaleExtent([1, 100])
-        .translateExtent([[0, 0], [$e.width(), $e.height()]]);
-    dSvgs.call(zoom);
-    dSvgs.nodes().forEach(n => {
-        n.onwheel = e => e.preventDefault();
-        n.onmousewheel = e => e.preventDefault();
-    })
+function bindZoom($svgs) {
+    $svgs.on('mousewheel', (() => {
+        let scale = 1;
+        let tx = 0;
+        let ty = 0;
+        let height = $svgs.height();
+        let width = $svgs.width();
+        function checkRange(val, min, max) {
+            return Math.max(Math.min(val, max), min);
+        }
+        return e => {
+            e.preventDefault();
+
+            let x = e.offsetX;
+            let y = e.offsetY;
+            let us = (e.originalEvent.wheelDelta > 0 ? scale * 1.2 : scale / 1.2);
+            us = checkRange(us, 1, 25);
+            if (scale === us) {
+                return;
+            }
+
+            let ux = tx + x / us - x / scale;
+            ux = checkRange(ux, -width, 0)
+            let uy = ty + y / us - y / scale;
+            uy = checkRange(uy, -height, scale);
+            $('.map-root', $svgs).attr('transform', `scale(${us}) translate(${ux}, ${uy})`);
+            scale = us;
+            tx = ux;
+            ty = uy;
+        }
+    })());
 }
 
 function scale(dE) {
