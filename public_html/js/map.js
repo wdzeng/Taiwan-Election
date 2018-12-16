@@ -63,16 +63,20 @@ function drawMap(dSvg, topoData) {
 }
 
 function bindZoom($svgs) {
-    $svgs.on('mousewheel', (() => {
+    $svgs.on('mousewheel mouseup mousedown mousemove mouseleave', (() => {
+
         let scale = 1;
         let tx = 0;
         let ty = 0;
         let height = $svgs.height();
         let width = $svgs.width();
+        let drag = false;
+
         function checkRange(val, min, max) {
             return Math.max(Math.min(val, max), min);
         }
-        return e => {
+
+        function wheel(e) {
             e.preventDefault();
 
             let x = e.offsetX;
@@ -84,13 +88,31 @@ function bindZoom($svgs) {
             }
 
             let ux = tx + x / us - x / scale;
-            ux = checkRange(ux, -width, 0)
+            ux = checkRange(ux, -width * (us - 1), 0)
             let uy = ty + y / us - y / scale;
-            uy = checkRange(uy, -height, scale);
+            uy = checkRange(uy, -height * (us - 1), 0);
             $('.map-root', $svgs).attr('transform', `scale(${us}) translate(${ux}, ${uy})`);
             scale = us;
             tx = ux;
             ty = uy;
+        }
+
+        function move(e) {
+            tx += e.originalEvent.movementX / scale;
+            tx = checkRange(tx, -width * (scale - 1), 0);
+            ty += e.originalEvent.movementY / scale;
+            ty = checkRange(ty, -height * (scale - 1), 0);
+            $('.map-root', $svgs).attr('transform', `scale(${scale}) translate(${tx}, ${ty})`);
+        }
+
+        return e => {
+            switch (e.type) {
+                case 'mousemove': drag && move(e); break;
+                case 'mouseleave':
+                case 'mouseup': drag = false; break;
+                case 'mousewheel': wheel(e); break;
+                case 'mousedown': drag = true; break;
+            }
         }
     })());
 }
