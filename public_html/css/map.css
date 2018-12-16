@@ -14,7 +14,7 @@ g.taiwan {
 
 g.county {
     stroke: white;
-    stroke-width: 1px;
+    stroke-width: 0.2px;
     fill:none;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -22,14 +22,20 @@ g.county {
 
 g.district {
     stroke: white;
-    stroke-width: 0.3px;
+    stroke-width: 0.09px;
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
 g.village {
-    display: none;
+    fill: none;
+    stroke: white;
+    stroke-width: 0.007px;
     stroke-linecap: round;
     stroke-linejoin: round;
+}
+
+.hide g.village {
+    display: none;
 }
