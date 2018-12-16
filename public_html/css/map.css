@@ -31,11 +31,11 @@ g.district {
 g.village {
     fill: none;
     stroke: white;
-    stroke-width: 0.007px;
+    stroke-width: 0.015px;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
-.hide g.village {
+.no-village g.village {
     display: none;
 }

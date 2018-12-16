@@ -1,5 +1,5 @@
 "use strict";
-const file = '/res/topojson/2.json';
+const file = '/res/topojson/5.json';
 
 function drawMap(dSvg, topoData) {
 
@@ -15,7 +15,7 @@ function drawMap(dSvg, topoData) {
     let renderer = d3.geoPath().projection(proj);
 
     // Draw on map
-    let dC = dSvg.append('g').attr('class', 'map-root nv');
+    let dC = dSvg.append('g').attr('class', 'map-root no-village');
 
     // Draw taiwan
     dC.append('g')
@@ -68,9 +68,12 @@ function bindZoom($svgs) {
         let scale = 1;
         let tx = 0;
         let ty = 0;
-        let height = $svgs.height();
-        let width = $svgs.width();
         let drag = false;
+
+        const height = $svgs.height();
+        const width = $svgs.width();
+        const showVillage = 4;
+        const sm = 1.12;
 
         function checkRange(val, min, max) {
             return Math.max(Math.min(val, max), min);
@@ -81,7 +84,7 @@ function bindZoom($svgs) {
 
             let x = e.offsetX;
             let y = e.offsetY;
-            let us = (e.originalEvent.wheelDelta > 0 ? scale * 1.2 : scale / 1.2);
+            let us = (e.originalEvent.wheelDelta > 0 ? scale * sm : scale / sm);
             us = checkRange(us, 1, 25);
             if (scale === us) {
                 return;
@@ -91,7 +94,11 @@ function bindZoom($svgs) {
             ux = checkRange(ux, -width * (us - 1), 0)
             let uy = ty + y / us - y / scale;
             uy = checkRange(uy, -height * (us - 1), 0);
-            $('.map-root', $svgs).attr('transform', `scale(${us}) translate(${ux}, ${uy})`);
+
+            let $root = $('.map-root', $svgs);
+            // Check changing village border
+            if ((scale - showVillage) * (us - showVillage) < 0) $root.toggleClass('no-village');
+            $root.attr('transform', `scale(${us}) translate(${ux}, ${uy})`);
             scale = us;
             tx = ux;
             ty = uy;
