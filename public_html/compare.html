@@ -46,9 +46,17 @@
         crossorigin="anonymous"></script>
 
     <script>
-        "use strict";
+        // Draw map
         drawMap(d3.selectAll('svg'));
         bindZoom($('.map'));
+
+        //Request Data
+        $.get('/q', {
+            area: { c: 0 },
+            election: '2018地方'
+        }, data => {
+            
+        });
     </script>
 </body>
 
