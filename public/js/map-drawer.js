@@ -1,65 +1,80 @@
 "use strict";
-const file = '/res/topojson/5.json';
+const MAP_PATH = '/res/topojson/5.json';
 
-function drawMap(dSvg, topoData) {
+function initMap(dSvg, topoData) {
 
+    // Init Data and init root
     let sc = scale(dSvg);
-    if (!topoData) {
-        d3.json(file).then(topoData => { drawMap(dSvg, topoData) });
-        return;
-    }
+    let twData = topojson.merge(topoData, topoData.objects.villages.geometries);
+    let proj = d3.geoMercator().fitExtent([[sc * 20, sc * -580], [sc * 930, sc * 1240]], twData);
+    let pathRenderer = d3.geoPath().projection(proj);
+    let dRoot = dSvg.append('g').attr('class', 'map-root no-village');
 
-    // Make projection
-    let taiwan = topojson.merge(topoData, topoData.objects.villages.geometries);
-    let proj = d3.geoMercator().fitExtent([[sc * 20, sc * -580], [sc * 930, sc * 1240]], taiwan);
-    let renderer = d3.geoPath().projection(proj);
-
-    // Draw on map
-    let dC = dSvg.append('g').attr('class', 'map-root no-village');
-
-    // Draw taiwan
-    dC.append('g')
+    // Draw Taiwan
+    dRoot.append('g')
         .attr('class', 'taiwan')
         .append('path')
-        .datum(taiwan)
-        .attr('d', renderer);
-    taiwan = null;
+        .datum(twData)
+        .attr('d', pathRenderer);
 
-    // Draw counties and districts
-    let county = dC.append('g')
-        .attr('class', 'county');
-    let district = dC.append('g')
+    return [pathRenderer, dRoot];
+}
+
+function drawCountiesAndDistricts(dRoot, topoData, pathRenderer) {
+
+    // First district, then county (concerning z-order)
+    let gd = dRoot.append('g')
         .attr('class', 'district')
-    let dids = getAllDistrictIds();
-    dids.forEach(id => {
+    let gc = dRoot.append('g')
+        .attr('class', 'county');
+
+    let distIds = getAllDistrictIds();
+    distIds.forEach(id => {
         // District
         if (id % 100) {
             let td = topojson.merge(topoData, topoData.objects.villages.geometries.filter(p => p.properties.d == id));
-            district.append('path').datum(td).attr('d', renderer).attr('dist', id);
+            gd.append('path').datum(td).attr('d', pathRenderer).attr('did', id);
         }
         // County
         else {
             let min = id;
             let max = id + 100;
             let td = topojson.merge(topoData, topoData.objects.villages.geometries.filter(p => min < p.properties.d && p.properties.d < max));
-            county.append('path').datum(td).attr('d', renderer).attr('did', id);
+            gc.append('path').datum(td).attr('d', pathRenderer).attr('cid', id);
         }
     });
-    district = null;
-    county = null;
+}
 
-    // Draw villages
+function drawVillages(dRoot, topoData, pathRenderer) {
+
     let villages = topojson.feature(topoData, topoData.objects.villages);
-    dC.append('g')
+    dRoot.append('g')
         .attr('class', 'village')
         .selectAll('path')
         .data(villages.features)
         .enter()
         .append('path')
-        .attr('d', renderer)
+        .attr('d', pathRenderer)
         .attr('vid', d => d.properties.v);
-    villages = null;
+}
 
+function drawMap(dSvg, topoData, cb) {
+
+    if (!topoData) {
+        d3.json(MAP_PATH).then(topoData => { drawMap(dSvg, topoData, cb) });
+        return;
+    }
+
+    // First init this map
+    let tempArray = initMap(dSvg, topoData);
+    let pathRenderer = tempArray[0];
+    let dRoot = tempArray[1];
+    
+    drawCountiesAndDistricts(dRoot, topoData, pathRenderer);
+    drawVillages(dRoot, topoData, pathRenderer);
+
+    // Callback
+    cb && cb();
 }
 
 function bindZoom($svgs) {

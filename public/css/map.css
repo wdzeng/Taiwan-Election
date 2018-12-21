@@ -3,18 +3,20 @@ svg.map {
     height: 640px;
     border: 2px solid black;
     margin: 8px;
+    background: ghostwhite;
 }
 
 g.taiwan {
+    display: none;
     stroke: none;
-    fill: green;
+    fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
 g.county {
     stroke: white;
-    stroke-width: 0.2px;
+    stroke-width: 0.5px;
     fill:none;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -22,7 +24,7 @@ g.county {
 
 g.district {
     stroke: white;
-    stroke-width: 0.09px;
+    stroke-width: 0.1px;
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -31,7 +33,7 @@ g.district {
 g.village {
     fill: none;
     stroke: white;
-    stroke-width: 0.015px;
+    stroke-width: 0.02px;
     stroke-linecap: round;
     stroke-linejoin: round;
 }

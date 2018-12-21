@@ -1,9 +1,14 @@
 let exp = require('express');
 let app = exp();
 
-app.use(exp.static('public_html'));
+let q = require('./lib/query.js');
+
+app.use(exp.static('public'));
 app.get('/q', (req, res) => {
-    console.log(JSON.stringify(req.query));
+    q.search(req.query, (err, data) => {
+        if (err) throw err;
+        res.send(JSON.stringify(data));
+    });
 });
 app.get('/', (req, res) => {
     res.send('Hello world!');
