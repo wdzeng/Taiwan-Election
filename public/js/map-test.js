@@ -7,9 +7,9 @@
         let qdata = {
             area: 0,
             no: 'lead',
-            year: 2016,
-            granule: 'c',
-            tbName: 'president',
+            year: 2014,
+            granule: 'v',
+            tbName: 'local',
             queried: ['vote', 'sratio', 'ratio']
         };
 
@@ -19,11 +19,10 @@
             $.get('/q', qdata, res => {
                 res = JSON.parse(res);
                 console.log(res);
-                paintEctrs($('svg.map:first'), res, true);
+                paintVillages($('svg.map:first'), res, true);
             });
 
         });
     })
-
 
 })();

@@ -4,25 +4,16 @@ const STRICT_CANDIDATE = 3;
 const SOFT_CANDIDATE = 2;
 const SMALL_CANDIDATE = 1;
 
-function paint($e, bg) {
-    $e.css({
-        fill: bg,
-    });
-}
+function paintCounties($svg, data, rsOnly) {
 
-function see(borders) {
-    if ('v' in borders) {
-        $('g.county', $svg).css('display', borders.v ? 'auto' : 'none');
-    }
-    if ('d' in borders) {
-        $('g.district', $svg).css('display', borders.v ? 'auto' : 'none');
-    }
-    if ('e' in borders) {
-        $('g.electoral', $svg).css('display', borders.v ? 'auto' : 'none');
-    }
-    if ('c' in borders) {
-        $('g.county', $svg).css('display', borders.v ? 'auto' : 'none');
-    }
+    let county = $('g.county', $svg);
+    let $painted, color;
+
+    data.forEach(x => {
+        $painted = $(`path[cid='${x.id}']`, county);
+        color = mixColor(getColorByParty(x.p), Number(x.r || x.s), null, rsOnly);
+        $painted.css('fill', color);
+    })
 }
 
 function paintDists($svg, data, rsOnly) {
@@ -33,7 +24,7 @@ function paintDists($svg, data, rsOnly) {
     data.forEach(x => {
         $painted = $(`path[did='${x.id}']`, $dist);
         color = mixColor(getColorByParty(x.p), Number(x.r || x.s), null, rsOnly);
-        paint($painted, color);
+        $painted.css('fill', color);
     })
 }
 
@@ -45,7 +36,19 @@ function paintEctrs($svg, data, rsOnly) {
     data.forEach(x => {
         $painted = $(`path[ectr='${x.id}']`, $ectr);
         color = mixColor(getColorByParty(x.p), Number(x.r || x.s), null, rsOnly);
-        paint($painted, color);
+        $painted.css('fill', color);
+    })
+}
+
+function paintVillages($svg, data, rsOnly) {
+
+    let $vill = $('g.village', $svg);
+    let $painted, color;
+
+    data.forEach(x => {
+        $painted = $(`path[did='${Math.floor(x.id / 1000)}'][vname='${x.vname}']`, $vill);
+        color = mixColor(getColorByParty(x.p), Number(x.r || x.s), null, rsOnly);
+        $painted.css('fill', color);
     })
 }
 
@@ -57,7 +60,7 @@ function getColorByParty(party) {
         case '中國國民黨': return AUTHORITARIAN;
         case '民主進步黨': return DEMOCRACY;
         case '時代力量': return EQUALITY;
-        case '親民黨': return OUTSIDER;
+        case '親民黨': case '民國黨': return OUTSIDER;
     }
 
     return AUTOCRACY;

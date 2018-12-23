@@ -49,11 +49,12 @@ function drawVillages(dRoot, topoData, pathRenderer) {
     dRoot.append('g')
         .attr('class', 'village')
         .selectAll('path')
-        .data(villages.features)
+        .data(villages.features.filter(v => v.properties.v))
         .enter()
         .append('path')
         .attr('d', pathRenderer)
-        .attr('vid', d => d.properties.v);
+        .attr('vname', d => d.properties.v)
+        .attr('did', d => d.properties.d);
 }
 
 function drawElectorals(dRoot, topoData, pathRenderer) {
@@ -133,10 +134,10 @@ function bindZoom($svgs) {
             // Check showing / hiding village border
             let $root = $('g.map-root', $svgs);
             if ((scale - showVillage) * (us - showVillage) < 0) $root.toggleClass('no-village');
-            
+
             // Zoom
             $root.attr('transform', `scale(${us}) translate(${ux}, ${uy})`);
-            
+
             // Update
             scale = us;
             tx = ux;

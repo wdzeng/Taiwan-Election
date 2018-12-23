@@ -9,15 +9,16 @@ svg.map {
 g.taiwan {
     display: none;
     stroke: none;
-    fill: none;
+    fill: white;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
 g.electoral {
+    display: none;
     stroke: white;
     stroke-width: 0.15px;
-    fill: green;
+    fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
@@ -26,7 +27,7 @@ g.county {
     display: none;
     stroke: white;
     stroke-width: 0.5px;
-    fill: none;
+    fill: #64a600;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
@@ -41,8 +42,7 @@ g.district {
 }
 
 g.village {
-    display: none;
-    fill: none;
+    fill: white;
     stroke: white;
     stroke-width: 0.02px;
     stroke-linecap: round;
@@ -50,5 +50,4 @@ g.village {
 }
 
 g.no-village g.village {
-    display: none;
 }
