@@ -1,5 +1,5 @@
 "use strict";
-const MAP_PATH = '/res/topojson/5.json';
+const MAP_PATH = '/res/topojson/2.json';
 
 function initMap(dSvg, topoData) {
 
@@ -23,23 +23,21 @@ function initMap(dSvg, topoData) {
 function drawCountiesAndDistricts(dRoot, topoData, pathRenderer) {
 
     // First district, then county (concerning z-order)
-    let gd = dRoot.append('g')
-        .attr('class', 'district')
-    let gc = dRoot.append('g')
-        .attr('class', 'county');
+    let gd = dRoot.append('g').attr('class', 'district')
+    let gc = dRoot.append('g').attr('class', 'county');
+    let td = null;
 
     let distIds = getAllDistrictIds();
     distIds.forEach(id => {
+
         // District
         if (id % 100) {
-            let td = topojson.merge(topoData, topoData.objects.villages.geometries.filter(p => p.properties.d == id));
+            td = topojson.merge(topoData, topoData.objects.villages.geometries.filter(p => p.properties.d == id));
             gd.append('path').datum(td).attr('d', pathRenderer).attr('did', id);
         }
         // County
         else {
-            let min = id;
-            let max = id + 100;
-            let td = topojson.merge(topoData, topoData.objects.villages.geometries.filter(p => min < p.properties.d && p.properties.d < max));
+            td = topojson.merge(topoData, topoData.objects.villages.geometries.filter(p => id < p.properties.d && p.properties.d < (id + 100)));
             gc.append('path').datum(td).attr('d', pathRenderer).attr('cid', id);
         }
     });
@@ -58,6 +56,19 @@ function drawVillages(dRoot, topoData, pathRenderer) {
         .attr('vid', d => d.properties.v);
 }
 
+function drawElectorals(dRoot, topoData, pathRenderer) {
+
+    let ge = dRoot.append('g').attr('class', 'electoral');
+    let te = null;
+
+    getAllElectorals().forEach(e => {
+        te = topojson.merge(topoData, topoData.objects.villages.geometries.filter(
+            p => getElectoral(p.properties.d, p.properties.v) == e)
+        );
+        ge.append('path').datum(te).attr('d', pathRenderer).attr('ectr', e);
+    })
+}
+
 function drawMap(dSvg, topoData, cb) {
 
     if (!topoData) {
@@ -69,8 +80,14 @@ function drawMap(dSvg, topoData, cb) {
     let tempArray = initMap(dSvg, topoData);
     let pathRenderer = tempArray[0];
     let dRoot = tempArray[1];
-    
+
+    // Draw counties and districts
     drawCountiesAndDistricts(dRoot, topoData, pathRenderer);
+
+    // Draw electorals
+    drawElectorals(dRoot, topoData, pathRenderer);
+
+    // Draw villages
     drawVillages(dRoot, topoData, pathRenderer);
 
     // Callback
@@ -95,8 +112,11 @@ function bindZoom($svgs) {
         }
 
         function wheel(e) {
+
+            // Stop bubbling
             e.preventDefault();
 
+            // Check zooming
             let x = e.offsetX;
             let y = e.offsetY;
             let us = (e.originalEvent.wheelDelta > 0 ? scale * sm : scale / sm);
@@ -110,10 +130,14 @@ function bindZoom($svgs) {
             let uy = ty + y / us - y / scale;
             uy = checkRange(uy, -height * (us - 1), 0);
 
-            let $root = $('.map-root', $svgs);
-            // Check changing village border
+            // Check showing / hiding village border
+            let $root = $('g.map-root', $svgs);
             if ((scale - showVillage) * (us - showVillage) < 0) $root.toggleClass('no-village');
+            
+            // Zoom
             $root.attr('transform', `scale(${us}) translate(${ux}, ${uy})`);
+            
+            // Update
             scale = us;
             tx = ux;
             ty = uy;

@@ -6,7 +6,8 @@ const DEMOCRACY = {
     s: '#a8ff24',
     xs: '#c2ff68',
     xxs: '#e8ffc4',
-    foul: '#f5ffe8'
+    foul: '#f5ffe8',
+    r: '#64a600'
 };
 
 const AUTHORITARIAN = {
@@ -17,7 +18,8 @@ const AUTHORITARIAN = {
     s: '#46a3ff',
     xs: '#84c1ff',
     xxs: '#c4e1ff',
-    foul: '#ecf5ff'
+    foul: '#ecf5ff',
+    r: '#2894ff'
 };
 
 const AUTOCRACY = {
@@ -28,7 +30,8 @@ const AUTOCRACY = {
     s: '#ff5151',
     xs: '#ff9797',
     xxs: '#ffd2d2',
-    foul: '#ffecec'
+    foul: '#ffecec',
+    r: '#ce0000'
 }
 
 const EQUALITY = {
@@ -39,7 +42,8 @@ const EQUALITY = {
     s: '#ffdc35',
     xs: '#ffe66f',
     xxs: '#fff0ac',
-    foul: '#fffcec'
+    foul: '#fffcec',
+    r: '#ffd306'
 }
 
 const DISCRIMINATION = {
@@ -50,16 +54,30 @@ const DISCRIMINATION = {
     s: '#ff60af',
     xs: '#ff95ca',
     xxs: '#ffd9ec',
-    foul: '	#fff7fb'
+    foul: '	#fff7fb',
+    r: '#f00080'
 }
 
 const INDEPENDENT = {
     xxl: '#0e0e0e',
-    xxl: '#272727',
+    xl: '#121212',
     l: '#3c3c3c',
     m: '#6c6c6c',
     s: '#9d9d9d',
     xs: '#bebebe',
     xxs: '#f0f0f0',
-    foul: '#fcfcfc'
+    foul: '#fcfcfc',
+    r: 'black'
+}
+
+const OUTSIDER = {
+    xxl: '#844200',
+    xl: '#bb5e00',
+    l: '#ea7500',
+    m: '#ff9224',
+    s: '#ffaf60',
+    xs: '#ffc78e',
+    xxs: '#ffe4ca',
+    foul: '#fffaf4',
+    r: '#ea7500'
 }

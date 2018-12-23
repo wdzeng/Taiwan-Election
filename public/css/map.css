@@ -14,23 +14,34 @@ g.taiwan {
     stroke-linejoin: round;
 }
 
-g.county {
+g.electoral {
     stroke: white;
-    stroke-width: 0.5px;
-    fill:none;
+    stroke-width: 0.15px;
+    fill: green;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
-g.district {
+g.county {
+    display: none;
     stroke: white;
-    stroke-width: 0.1px;
+    stroke-width: 0.5px;
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
+g.district {
+    display: none;
+    stroke: white;
+    stroke-width: 0.1px;
+    fill: red;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 g.village {
+    display: none;
     fill: none;
     stroke: white;
     stroke-width: 0.02px;
@@ -38,6 +49,6 @@ g.village {
     stroke-linejoin: round;
 }
 
-.no-village g.village {
+g.no-village g.village {
     display: none;
 }

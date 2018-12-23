@@ -6,10 +6,10 @@
 
         let qdata = {
             area: 0,
-            no: 'elect',
-            year: 2018,
-            granule: 'd',
-            tbName: 'local',
+            no: 'lead',
+            year: 2016,
+            granule: 'c',
+            tbName: 'president',
             queried: ['vote', 'sratio', 'ratio']
         };
 
@@ -19,7 +19,7 @@
             $.get('/q', qdata, res => {
                 res = JSON.parse(res);
                 console.log(res);
-                paintDists($('svg.map:first'), res);
+                paintEctrs($('svg.map:first'), res, true);
             });
 
         });
