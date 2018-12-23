@@ -14,40 +14,38 @@ g.taiwan {
     stroke-linejoin: round;
 }
 
-g.electoral {
-    display: none;
+g.county, g.electoral {
     stroke: white;
-    stroke-width: 0.15px;
+    stroke-width: 0.5px;
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
-g.county {
-    display: none;
-    stroke: white;
-    stroke-width: 0.5px;
-    fill: #64a600;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
 g.district {
-    display: none;
     stroke: white;
-    stroke-width: 0.1px;
-    fill: red;
+    stroke-width: 0.3px;
+    fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
 g.village {
-    fill: white;
+    fill: none;
     stroke: white;
     stroke-width: 0.02px;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
-g.no-village g.village {
+g.no-village>g.village {
+    display: none !important;
+}
+
+g.bg>* {
+    stroke: none !important;
+}
+
+g.fg>* {
+    fill: none !important; 
 }

@@ -1,7 +1,13 @@
 let ectrs = [101, 102, 103, 104, 105, 106, 107, 108, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 301, 302, 303, 304, 305, 306, 401, 402, 403, 404, 405, 406, 407, 408, 501, 502, 503, 504, 505, 601, 602, 603, 604, 605, 606, 607, 608, 609, 701, 801, 901, 1001, 1101, 1102, 1201, 1202, 1203, 1204, 1301, 1302, 1401, 1402, 1501, 1502, 1601, 1602, 1603, 1701, 1801, 1901, 2001];
 
+let goodEctrs = [106, 104, 201, 210, 211, 212, 302, 305, 401, 403, 405, 406, 408, 501, 502, 503, 504, 505, 601, 602, 603, 604, 608];
+
 function getAllElectorals() {
     return ectrs;
+}
+
+function isGoodElecotral(checked) {
+    return checked >= 700 || goodEctrs.includes(Number(checked));
 }
 
 function getElectoral(did, vname) {
@@ -175,8 +181,9 @@ function ectr212(did) {
 function ectr301(did, vname) {
     if (did == 301) {
         switch (vname) {
-            case "汴洲里": case "春日里": case "會稽里": case "大有里": case "寶山里": case "大興里": case "忠義里": case "三元里": case "青溪里": case "三民里": case "萬壽里": true;
+            case "汴洲里": case "春日里": case "會稽里": case "大有里": case "寶山里": case "大興里": case "忠義里": case "三元里": case "青溪里": case "三民里": case "萬壽里": return true;
         }
+        return false;
     }
     return did == 306 || did == 309;
 }

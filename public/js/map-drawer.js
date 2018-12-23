@@ -1,5 +1,7 @@
 "use strict";
 const MAP_PATH = '/res/topojson/2.json';
+const showVillage = 5;
+const sm = 1.22;
 
 function initMap(dSvg, topoData) {
 
@@ -23,8 +25,12 @@ function initMap(dSvg, topoData) {
 function drawCountiesAndDistricts(dRoot, topoData, pathRenderer) {
 
     // First district, then county (concerning z-order)
-    let gd = dRoot.append('g').attr('class', 'district')
-    let gc = dRoot.append('g').attr('class', 'county');
+    dRoot.append('g').attr('class', 'district fg');
+    dRoot.append('g').attr('class', 'district bg');
+    let gd = dRoot.selectAll('g.district');
+    dRoot.append('g').attr('class', 'county fg');
+    dRoot.append('g').attr('class', 'county bg');
+    let gc = dRoot.selectAll('g.county');
     let td = null;
 
     let distIds = getAllDistrictIds();
@@ -59,7 +65,9 @@ function drawVillages(dRoot, topoData, pathRenderer) {
 
 function drawElectorals(dRoot, topoData, pathRenderer) {
 
-    let ge = dRoot.append('g').attr('class', 'electoral');
+    dRoot.append('g').attr('class', 'electoral fg');
+    dRoot.append('g').attr('class', 'electoral bg');
+    let ge = dRoot.selectAll('g.electoral');
     let te = null;
 
     getAllElectorals().forEach(e => {
@@ -91,6 +99,16 @@ function drawMap(dSvg, topoData, cb) {
     // Draw villages
     drawVillages(dRoot, topoData, pathRenderer);
 
+    // Reorder
+    dSvg.select('g.taiwan').raise();
+    dSvg.select('g.county.bg').raise();
+    dSvg.select('g.district.bg').raise();
+    dSvg.select('g.electoral.bg').raise();
+    dSvg.select('g.village').raise();
+    dSvg.select('g.electoral.fg').raise();
+    dSvg.select('g.district.fg').raise();
+    dSvg.select('g.county.fg').raise();
+
     // Callback
     cb && cb();
 }
@@ -105,8 +123,6 @@ function bindZoom($svgs) {
 
         const height = $svgs.height();
         const width = $svgs.width();
-        const showVillage = 4;
-        const sm = 1.12;
 
         function checkRange(val, min, max) {
             return Math.max(Math.min(val, max), min);
@@ -133,7 +149,9 @@ function bindZoom($svgs) {
 
             // Check showing / hiding village border
             let $root = $('g.map-root', $svgs);
-            if ((scale - showVillage) * (us - showVillage) < 0) $root.toggleClass('no-village');
+            if ((scale - showVillage) * (us - showVillage) < 0) {
+                $root.toggleClass('no-village');
+            }
 
             // Zoom
             $root.attr('transform', `scale(${us}) translate(${ux}, ${uy})`);

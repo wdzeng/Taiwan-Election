@@ -4,22 +4,23 @@
 
     $(() => {
 
-        let qdata = {
+        let qdata1 = {
             area: 0,
             no: 'lead',
-            year: 2014,
-            granule: 'v',
-            tbName: 'local',
+            year: 2016,
+            granule: 'e',
+            tbName: 'legislator',
             queried: ['vote', 'sratio', 'ratio']
         };
 
         drawMap(d3.selectAll('svg.map'), null, () => {
-            
+
             bindZoom($('svg.map'));
-            $.get('/q', qdata, res => {
+
+            $.get('/q', qdata1, res => {
                 res = JSON.parse(res);
                 console.log(res);
-                paintVillages($('svg.map:first'), res, true);
+                paintEctrs($('svg.map:first'), res, false, STRICT_CANDIDATE, true);
             });
 
         });

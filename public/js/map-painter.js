@@ -4,51 +4,103 @@ const STRICT_CANDIDATE = 3;
 const SOFT_CANDIDATE = 2;
 const SMALL_CANDIDATE = 1;
 
-function paintCounties($svg, data, rsOnly) {
+function paintCounties($svg, data, rsOnly = true, strict = STRICT_CANDIDATE) {
 
-    let county = $('g.county', $svg);
+    $('g.taiwan', $svg).show();
+    $('g.county>*', $svg).hide();
+    $('g.district', $svg).hide();
+    $('g.village', $svg).hide();
+
+    let $county = $('g.county', $svg);
     let $painted, color;
 
     data.forEach(x => {
-        $painted = $(`path[cid='${x.id}']`, county);
-        color = mixColor(getColorByParty(x.p), Number(x.r || x.s), null, rsOnly);
-        $painted.css('fill', color);
+        $painted = $(`path[cid='${x.id}']`, $county);
+        color = mixColor(getColorByParty(x.p), Number(x.r || x.s), strict, rsOnly);
+        $painted.show().css('fill', color);
     })
+
+    $('g.county.fg', $svg).filter(c => !data.some(d => d.id == c.attr('cid'))).css('bg')
 }
 
-function paintDists($svg, data, rsOnly) {
+function paintDists($svg, data, rsOnly = true, strict = STRICT_CANDIDATE) {
 
     let $dist = $('g.district', $svg);
-    let $painted, color;
+    let $county = $('g.county', $svg);
+    $county.children('*').hide();
+    $dist.children('*').hide();
+    $('g.taiwan', $svg).show();
+    $('g.village', $svg).hide();
 
+    let $painted, color;
     data.forEach(x => {
+        if (x.id % 100 == 0) return;
         $painted = $(`path[did='${x.id}']`, $dist);
-        color = mixColor(getColorByParty(x.p), Number(x.r || x.s), null, rsOnly);
-        $painted.css('fill', color);
+        color = mixColor(getColorByParty(x.p), Number(x.r || x.s), strict, rsOnly);
+        $painted.show().css('fill', color);
+        $county.children(`path[cid='${x.id - (x.id % 100)}']`).show();
     })
 }
 
-function paintEctrs($svg, data, rsOnly) {
+function paintEctrs($svg, data, rsOnly = true, strict = STRICT_CANDIDATE) {
 
     let $ectr = $('g.electoral', $svg);
-    let $painted, color;
+    $ectr.children('*').hide();
+    $('g.county', $svg).hide();
+    $('g.district', $svg).hide();
+    $('g.village', $svg).hide();
+    $('g.taiwan', $svg).show();
+
+    let $painted = null, color = null;
 
     data.forEach(x => {
-        $painted = $(`path[ectr='${x.id}']`, $ectr);
-        color = mixColor(getColorByParty(x.p), Number(x.r || x.s), null, rsOnly);
-        $painted.css('fill', color);
+        $painted = $ectr.children(`*[ectr='${x.ectr}']`);
+        console.log(`*[ectr='${x.ectr}']`);
+        color = mixColor(getColorByParty(x.p), Number(x.r || x.s), strict, rsOnly);
+        $painted.show().css('fill', color);
     })
 }
 
-function paintVillages($svg, data, rsOnly) {
+function paintVillages($svg, data, rsOnly = true, strict = STRICT_CANDIDATE, islg = false) {
 
+    $('g.taiwan', $svg).show();
+    let $super = null;
+    if (islg) {
+        $super = $('g.electoral', $svg).show();
+    } else {
+        $super = $('g.county', $svg).show();
+        $('g.electoral', $svg).hide();
+    }
+    let $county = $('g.county', $svg).show();
+    let $dist = $('g.district', $svg).show();
     let $vill = $('g.village', $svg);
-    let $painted, color;
+    $super.children('*').hide();
+    $county.children('*').hide();
+    $dist.children('*').hide();
+    $vill.children('*').hide();
 
+    let $painted, color;
     data.forEach(x => {
-        $painted = $(`path[did='${Math.floor(x.id / 1000)}'][vname='${x.vname}']`, $vill);
-        color = mixColor(getColorByParty(x.p), Number(x.r || x.s), null, rsOnly);
-        $painted.css('fill', color);
+        if (x.id < 10000) {
+            if (islg) {
+                if (isGoodElecotral(x.ectr)) {
+                    $painted = $dist.children(`*[did='${x.id}']`);
+                    $super.children(`*[ectr='${x.ectr}']`).show();
+                } else {
+                    $painted = $super.children(`*[ectr='${x.ectr}']`);
+                    // $dist.children(`*[did='${x.id}']`).show();
+                }
+            }
+            else {
+                $painted = $dist.children(`*[did='${x.id}']`);
+                $super.children(`*[cid='${x.id - x.id % 100}']`).show();
+            }
+        }
+        else {
+            $painted = $(`*[did='${Math.floor(x.id / 1000)}'][vname='${x.vname}']`, $vill);
+        }
+        color = mixColor(getColorByParty(x.p), Number(x.r || x.s), strict, rsOnly);
+        $painted.show().css('fill', color);
     })
 }
 
@@ -60,7 +112,8 @@ function getColorByParty(party) {
         case '中國國民黨': return AUTHORITARIAN;
         case '民主進步黨': return DEMOCRACY;
         case '時代力量': return EQUALITY;
-        case '親民黨': case '民國黨': return OUTSIDER;
+        case '親民黨':
+        case '民國黨': return OUTSIDER;
     }
 
     return AUTOCRACY;
@@ -68,7 +121,7 @@ function getColorByParty(party) {
 
 function mixColor(color, opacity, strict = STRICT_CANDIDATE, rsOnly = false) {
 
-    if (opacity == 0) return INDEPENDENT['m'];
+    if (opacity == 0) return 'inherit';
     return color[toLevel(opacity, strict, rsOnly)];
 }
 
