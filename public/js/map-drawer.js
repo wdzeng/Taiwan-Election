@@ -1,36 +1,41 @@
 "use strict";
-const MAP_PATH = '/res/topojson/2.json';
-const showVillage = 5;
-const sm = 1.22;
 
-function initMap(dSvg, topoData) {
+const COMPRESS = 50;
+const MAP_PATH = `/res/topojson/${COMPRESS}.json`;
+const CANVAS_PIXEL = 2;
+
+function getExtent(sc) {
+    return (sc === 2 || sc === 5) ?
+        [[sc * 20, sc * -580], [sc * 930, sc * 1240]] :
+        [[sc * 10, sc * -830], [sc * 1110, sc * 1480]];
+}
+
+const VILLAGE_VISIBLE = 5;
+const ZOOM_RATIO = 1.22;
+
+function initMap(droot, topoData) {
 
     // Init Data and init root
-    let sc = scale(dSvg);
+    let sc = scale(droot);
     let twData = topojson.merge(topoData, topoData.objects.villages.geometries);
-    let proj = d3.geoMercator().fitExtent([[sc * 20, sc * -580], [sc * 930, sc * 1240]], twData);
+    let proj = d3.geoMercator().fitExtent(getExtent(sc), twData);
     let pathRenderer = d3.geoPath().projection(proj);
-    let dRoot = dSvg.append('g').attr('class', 'map-root no-village');
 
     // Draw Taiwan
-    dRoot.append('g')
+    droot.append('g')
         .attr('class', 'taiwan')
         .append('path')
         .datum(twData)
         .attr('d', pathRenderer);
 
-    return [pathRenderer, dRoot];
+    return pathRenderer;
 }
 
-function drawCountiesAndDistricts(dRoot, topoData, pathRenderer) {
+function drawCountiesAndDistricts(droot, topoData, pathRenderer) {
 
     // First district, then county (concerning z-order)
-    dRoot.append('g').attr('class', 'district fg');
-    dRoot.append('g').attr('class', 'district bg');
-    let gd = dRoot.selectAll('g.district');
-    dRoot.append('g').attr('class', 'county fg');
-    dRoot.append('g').attr('class', 'county bg');
-    let gc = dRoot.selectAll('g.county');
+    let gd = droot.append('g').attr('class', 'district');
+    let gc = droot.append('g').attr('class', 'county');
     let td = null;
 
     let distIds = getAllDistrictIds();
@@ -49,10 +54,10 @@ function drawCountiesAndDistricts(dRoot, topoData, pathRenderer) {
     });
 }
 
-function drawVillages(dRoot, topoData, pathRenderer) {
+function drawVillages(droot, topoData, pathRenderer) {
 
     let villages = topojson.feature(topoData, topoData.objects.villages);
-    dRoot.append('g')
+    droot.append('g')
         .attr('class', 'village')
         .selectAll('path')
         .data(villages.features.filter(v => v.properties.v))
@@ -63,11 +68,9 @@ function drawVillages(dRoot, topoData, pathRenderer) {
         .attr('did', d => d.properties.d);
 }
 
-function drawElectorals(dRoot, topoData, pathRenderer) {
+function drawElectorals(droot, topoData, pathRenderer) {
 
-    dRoot.append('g').attr('class', 'electoral fg');
-    dRoot.append('g').attr('class', 'electoral bg');
-    let ge = dRoot.selectAll('g.electoral');
+    let ge = droot.append('g').attr('class', 'electoral');
     let te = null;
 
     getAllElectorals().forEach(e => {
@@ -78,55 +81,102 @@ function drawElectorals(dRoot, topoData, pathRenderer) {
     })
 }
 
-function drawMap(dSvg, topoData, cb) {
+function drawMap(droot, topoData, cb) {
 
     if (!topoData) {
-        d3.json(MAP_PATH).then(topoData => { drawMap(dSvg, topoData, cb) });
+        d3.json(MAP_PATH).then(topoData => { drawMap(droot, topoData, cb) });
         return;
     }
 
-    // First init this map
-    let tempArray = initMap(dSvg, topoData);
-    let pathRenderer = tempArray[0];
-    let dRoot = tempArray[1];
-
-    // Draw counties and districts
-    drawCountiesAndDistricts(dRoot, topoData, pathRenderer);
-
-    // Draw electorals
-    drawElectorals(dRoot, topoData, pathRenderer);
-
-    // Draw villages
-    drawVillages(dRoot, topoData, pathRenderer);
-
-    // Reorder
-    dSvg.select('g.taiwan').raise();
-    dSvg.select('g.county.bg').raise();
-    dSvg.select('g.district.bg').raise();
-    dSvg.select('g.electoral.bg').raise();
-    dSvg.select('g.village').raise();
-    dSvg.select('g.electoral.fg').raise();
-    dSvg.select('g.district.fg').raise();
-    dSvg.select('g.county.fg').raise();
+    let pathRenderer = initMap(droot, topoData);
+    drawCountiesAndDistricts(droot, topoData, pathRenderer);
+    drawElectorals(droot, topoData, pathRenderer);
+    drawVillages(droot, topoData, pathRenderer);
 
     // Callback
     cb && cb();
 }
 
-function bindZoom($svgs) {
-    $svgs.on('mousewheel mouseup mousedown mousemove mouseleave', (() => {
+function initCanvas($canvas) {
+
+    let w = $canvas.width() * CANVAS_PIXEL;
+    let h = $canvas.height() * CANVAS_PIXEL;
+    $canvas.each((i, e) => {
+        e.width = w;
+        e.height = h;
+    })
+}
+
+function drawFirstCanvas($dataTree, canvas, scale, translation) {
+
+    function drawBg($path) {
+        if ($path.is('[invisible]')) return;
+        let $e = null;
+        ctx.fillStyle = $path.css('fill');
+        $path.children().each((i, e) => {
+            $e = $(e);
+            ctx.fill(new Path2D($e.attr('d')));
+        });
+
+    }
+
+    function drawFg($path) {
+        if ($path.is('[invisible]')) return;
+        let $e = null;
+        $path.children().each((i, e) => {
+            $e = $(e);
+            ctx.strokeStyle = $e.css('stroke');
+            ctx.lineWidth = parseFloat($e.css('stroke-width'));
+            ctx.stroke(new Path2D($e.attr('d')));
+        });
+
+    }
+
+    let ctx = canvas.getContext('2d');
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw each layer
+    ctx.scale(CANVAS_PIXEL * scale, CANVAS_PIXEL * scale);
+    let $tw = $dataTree.children('g.taiwan');
+    let $coun = $dataTree.children('g.county');
+    let $dist = $dataTree.children('g.district');
+    let $vill = $dataTree.children('g.village');
+    drawBg($tw);
+    drawBg($coun);
+    drawBg($dist);
+    drawBg($vill);
+    drawFg($vill);
+    drawFg($dist);
+    drawFg($coun);
+}
+
+function drawCanvas($dataTree, $canvas, scale = 1, translation) {
+
+    let first = $canvas[0];
+    drawFirstCanvas($dataTree, first, scale, translation);
+    $canvas.each((i, e) => {
+        if (i == 0) return;
+        e.getContext('2d').drawImage(first, 0, 0);
+    })
+}
+
+function bindZoom($canvas) {
+
+    function ensureInRange(val, min, max) {
+        return Math.max(Math.min(val, max), min);
+    }
+
+    $canvas.on('mousewheel mouseup mousedown mousemove mouseleave', (() => {
 
         let scale = 1;
         let tx = 0;
         let ty = 0;
         let drag = false;
 
-        const height = $svgs.height();
-        const width = $svgs.width();
-
-        function checkRange(val, min, max) {
-            return Math.max(Math.min(val, max), min);
-        }
+        const HEIGHT = $canvas.height();
+        const WIDTH = $canvas.width();
 
         function wheel(e) {
 
@@ -136,20 +186,20 @@ function bindZoom($svgs) {
             // Check zooming
             let x = e.offsetX;
             let y = e.offsetY;
-            let us = (e.originalEvent.wheelDelta > 0 ? scale * sm : scale / sm);
-            us = checkRange(us, 1, 25);
+            let us = (e.originalEvent.wheelDelta > 0 ? scale * ZOOM_RATIO : scale / ZOOM_RATIO);
+            us = ensureInRange(us, 1, 25);
             if (scale === us) {
                 return;
             }
 
             let ux = tx + x / us - x / scale;
-            ux = checkRange(ux, -width * (us - 1), 0)
+            ux = ensureInRange(ux, -WIDTH * (us - 1), 0)
             let uy = ty + y / us - y / scale;
-            uy = checkRange(uy, -height * (us - 1), 0);
+            uy = ensureInRange(uy, -HEIGHT * (us - 1), 0);
 
             // Check showing / hiding village border
-            let $root = $('g.map-root', $svgs);
-            if ((scale - showVillage) * (us - showVillage) < 0) {
+            let $root = $('g.map-root', $canvas);
+            if ((scale - VILLAGE_VISIBLE) * (us - VILLAGE_VISIBLE) < 0) {
                 $root.toggleClass('no-village');
             }
 
@@ -164,10 +214,10 @@ function bindZoom($svgs) {
 
         function move(e) {
             tx += e.originalEvent.movementX / scale;
-            tx = checkRange(tx, -width * (scale - 1), 0);
+            tx = ensureInRange(tx, -WIDTH * (scale - 1), 0);
             ty += e.originalEvent.movementY / scale;
-            ty = checkRange(ty, -height * (scale - 1), 0);
-            $('.map-root', $svgs).attr('transform', `scale(${scale}) translate(${tx}, ${ty})`);
+            ty = ensureInRange(ty, -HEIGHT * (scale - 1), 0);
+            $('.map-root', $canvas).attr('transform', `scale(${scale}) translate(${tx}, ${ty})`);
         }
 
         return e => {

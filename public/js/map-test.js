@@ -13,13 +13,14 @@
             queried: ['vote', 'sratio', 'ratio']
         };
 
-        drawMap(d3.selectAll('svg.map'), null, () => {
+        drawMap(d3.select('twmap'), null, () => {
 
-            bindZoom($('svg.map'));
+            initCanvas($('canvas'));
+            drawCanvas($('twmap'), $('canvas'));
+            return;
 
             $.get('/q', qdata1, res => {
                 res = JSON.parse(res);
-                console.log(res);
                 paintEctrs($('svg.map:first'), res, false, STRICT_CANDIDATE, true);
             });
 

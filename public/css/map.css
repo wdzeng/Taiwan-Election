@@ -1,22 +1,33 @@
-svg.map {
-    width: 482px;
-    height: 640px;
-    border: 2px solid black;
+twmap {
+    display: none;
+}
+
+.map {
+    width: 450px;
+    height: 600px;
+    border: 0px solid black;
     margin: 8px;
     background: ghostwhite;
 }
 
 g.taiwan {
-    display: none;
     stroke: none;
-    fill: white;
+    fill: green;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
-g.county, g.electoral {
-    stroke: white;
+g.electoral {
+    stroke: none;
     stroke-width: 0.5px;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+g.county {
+    stroke: white;
+    stroke-width: 0.83px;
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -33,19 +44,11 @@ g.district {
 g.village {
     fill: none;
     stroke: white;
-    stroke-width: 0.02px;
+    stroke-width: 0.05px;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
 g.no-village>g.village {
     display: none !important;
-}
-
-g.bg>* {
-    stroke: none !important;
-}
-
-g.fg>* {
-    fill: none !important; 
 }
