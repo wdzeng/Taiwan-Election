@@ -143,9 +143,9 @@ function bindZoom($svgs) {
             }
 
             let ux = tx + x / us - x / scale;
-            ux = checkRange(ux, -width * (us - 1), 0)
+            ux = checkRange(ux, -width * (us - 1)/ us, 0)
             let uy = ty + y / us - y / scale;
-            uy = checkRange(uy, -height * (us - 1), 0);
+            uy = checkRange(uy, -height * (us - 1) /us, 0);
 
             // Check showing / hiding village border
             let $root = $('g.map-root', $svgs);

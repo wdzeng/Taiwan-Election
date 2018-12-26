@@ -1,7 +1,6 @@
-svg.map {
-    width: 482px;
-    height: 640px;
-    border: 2px solid black;
+.map {
+    width: 450px;
+    height: 600px;
     margin: 8px;
     background: ghostwhite;
 }
@@ -47,5 +46,5 @@ g.bg>* {
 }
 
 g.fg>* {
-    fill: none !important; 
+    fill: none !important;
 }

@@ -55,7 +55,6 @@ function paintEctrs($svg, data, rsOnly = true, strict = STRICT_CANDIDATE) {
 
     data.forEach(x => {
         $painted = $ectr.children(`*[ectr='${x.ectr}']`);
-        console.log(`*[ectr='${x.ectr}']`);
         color = mixColor(getColorByParty(x.p), Number(x.r || x.s), strict, rsOnly);
         $painted.show().css('fill', color);
     })
