@@ -1,61 +1,78 @@
-const MAP_PATH = "/res/topojson/2.json";
+const MAP_PATH = "/res/topojson/100.json";
 const DPI = 2;
 const CV_WIDTH = DPI * 450, CV_HEIGHT = DPI * 600;
 const EXTENT = [[0, 0], [CV_WIDTH, CV_HEIGHT]];
 
-let canvas = document.getElementById('cvmap');
-canvas.width = CV_WIDTH;
-canvas.height = CV_HEIGHT;
-let context = canvas.getContext('2d');
-let mapData = null;
-let projection = null;
-let pathRenderer = null;
+let dpis = [100, 50, 25, 12, 6, 3, 2];
+let $body = $('body');
+dpis.map(d => getMapPath(d)).forEach((path, i) => {
+    d3.json(path).then(o => normalTask(o, dpis[i]));
+    d3.json(path).then(o => meshTask(o, dpis[i]));
+});
 
-d3.json(MAP_PATH).then(topoObject => {
+function getMapPath(dpi) {
+    return `/res/topojson/${dpi}.json`
+}
 
-    mapData = topojson.feature(topoObject, topoObject.objects.villages);
-    projection = d3.geoMercator().fitExtent(EXTENT, mapData);
-    pathRenderer = d3.geoPath().context(context).projection(projection);
+function normalTask(topoObject, dpi) {
 
+    let mapData = topojson.feature(topoObject, topoObject.objects.villages);
+    task(mapData, `Normal ${dpi}`);
+}
+
+function meshTask(topoObject, dpi) {
+
+    let mapData = topojson.mesh(topoObject, topoObject.objects.villages);
+    task(mapData, `Mesh ${dpi}`);
+}
+
+function task(mapData, msg) {
+    // Init topojson
+    let projection = d3.geoMercator().fitExtent(EXTENT, mapData);
+
+    // Init context
+    let context = getContext(msg);
     context.strokeStyle = '#444';
-    context.fillStyle = 'white';
-    context.lineWidth = 0.2;
+    context.fillStyle = '#C00';
 
+    // Init path renderer
+    let pathRenderer = d3.geoPath().context(context).projection(projection);
+
+    // Draw
+    draw(context, pathRenderer, mapData, msg);
+}
+
+function getContext(msg) {
+
+    let $head = $(`<h2>${msg}</h2>`);
+    let $canvas = $('<canvas></canvas>');
+    let $div = $('<div></div>');
+    $div.append($head).append($canvas);
+    $body.append($div);
+
+    let canvas = $canvas[0];
+    canvas.width = CV_WIDTH;
+    canvas.height = CV_HEIGHT;
+
+    const scale = 15;
+    let context = canvas.getContext('2d');
     context.translate(450, 600);
-    context.scale(1, 1);
+    context.scale(scale, scale);
     context.translate(-450, -600);
+    context.lineWidth = 1 / scale;
+    return context;
+}
 
-    asyncDraw();
-    asyncDraw();
-    asyncDraw();
-    asyncDraw();
-    asyncDraw();
+function draw(context, pathRenderer, mapData, msg) {
 
-})
-
-
-function asyncDraw() {
-    setTimeout(function () {
-        draw();
+    setTimeout(() => {
+        let t0 = new Date().getTime();
+        context.beginPath();
+        pathRenderer(mapData);
+        context.stroke();
+        let t1 = new Date().getTime();
+        console.log(`${msg}: ${t1 - t0} ms`);
     }, 0);
-}
-
-// d3.select('#cvmap').call(d3.zoom().scaleExtent([1, 8]).on('zoom', zoom));
-
-function zoom() {
-    var transform = d3.event.transform;
-    context.clearRect(0, 0, CV_WIDTH, CV_HEIGHT);
-    projection.translate([transform.x, transform.y]).scale(transform.k);
-    draw();
-}
-
-function draw() {
-    let t0 = new Date().getTime();
-    context.beginPath();
-    pathRenderer(mapData);
-    context.stroke();
-    let t1 = new Date().getTime();
-    console.log((t1 - t0) + ' ms')
 }
 
 
