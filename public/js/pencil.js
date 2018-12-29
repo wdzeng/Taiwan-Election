@@ -1,6 +1,6 @@
 import LineRenderer from './line-renderer.js';
 
-export default class Pencil {
+export default class Painter {
 
     constructor(proj) {
 
@@ -109,14 +109,15 @@ export default class Pencil {
         this.polygons.push(new Polygon(name, cvc, [x0, y0, x1, y1]));
     }
 
+    
     each(bounds, granule = 1, f) {
 
         this.lr = new LineRenderer();
         let filted = bounds ? this.polygons.filter(pg => pg.involve(bounds)) : this.polygons;
         filted.forEach(pg => this.render(pg.coordinates, pg.bounds, granule));
-        let segs = this.lr.each(f);
-        return segs;
+        this.lr.each(f);
     }
+    
 }
 
 class Polygon {
