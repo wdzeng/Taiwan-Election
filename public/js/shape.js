@@ -1,6 +1,6 @@
 import LineRenderer from './line-renderer.js';
 
-export default class Painter {
+export default class Shape {
 
     constructor(proj) {
 
@@ -8,17 +8,17 @@ export default class Painter {
         this.polygons = [];
     }
 
-    addFeatureCollection(name, fc) {
-        fc.features.forEach(f => this.addFeature(name, f));
+    __addFeatureCollection(name, fc) {
+        fc.features.forEach(f => this.__addFeature(name, f));
     }
 
-    addFeature(name, fea) {
+    __addFeature(name, fea) {
         switch (fea.geometry.type) {
             case 'Polygon':
-                fea.geometry.coordinates.forEach(c => this.addPolygon(name, c));
+                fea.geometry.coordinates.forEach(c => this.__addPolygon(name, c));
                 return;
             case 'MultiPolygon':
-                fea.geometry.coordinates.forEach(c => c.forEach(c => this.addPolygon(name, c)));
+                fea.geometry.coordinates.forEach(c => c.forEach(c => this.__addPolygon(name, c)));
                 return;
         }
     }
@@ -28,30 +28,31 @@ export default class Painter {
         switch (object.type) {
 
             case 'Feature':
-                this.addFeature(name, object);
+                this.__addFeature(name, object);
                 return;
 
             case 'FeatureCollection':
-                this.addFeatureCollection(name, object);
+                this.__addFeatureCollection(name, object);
                 return;
 
             case 'MultiLineString':
-                object.coordinates.forEach(c => this.addPolygon(name, c))
+                object.coordinates.forEach(c => this.__addPolygon(name, c))
                 return;
         }
     }
 
-    getFigure(bounds, granule = 1) {
+    getFigure(bounds, granule = 1, transform) {
 
         this.lr = new LineRenderer();
         let filted = bounds ? this.polygons.filter(pg => pg.involve(bounds)) : this.polygons;
-        filted.forEach(pg => this.render(pg.coordinates, pg.bounds, granule));
+        filted.forEach(pg => this.__render(pg.coordinates, pg.bounds, granule, transform));
         let segs = this.lr.getSegments();
+        this.lr = null;
         return segs;
     }
 
     // Bottle neck here
-    render(cords, bounds, granule = 1) {
+    __render(cords, bounds, granule = 1, transform) {
 
         /*
         // Check bounds
@@ -78,12 +79,12 @@ export default class Painter {
         */
 
         // Set start point
-        let pp = rndp(cords[0], granule);
+        let pp = rndp(cords[0], granule, transform);
 
         // Render lines
         let np;
         for (let i = 1; i < cords.length; i++) {
-            np = rndp(cords[i], granule);
+            np = rndp(cords[i], granule, transform);
             // Check distinct points
             if (eqp(pp, np)) continue;
             // Render new line
@@ -92,7 +93,7 @@ export default class Painter {
         };
     }
 
-    addPolygon(name, cords) {
+    __addPolygon(name, cords) {
 
         let first = this.proj(cords[0]), cvc = [first];
         let x0 = first[0], y0 = first[1], x1 = first[0], y1 = first[1];
@@ -109,15 +110,14 @@ export default class Painter {
         this.polygons.push(new Polygon(name, cvc, [x0, y0, x1, y1]));
     }
 
-    
-    each(bounds, granule = 1, f) {
+    each(bounds, granule = 1, transform, f) {
 
         this.lr = new LineRenderer();
         let filted = bounds ? this.polygons.filter(pg => pg.involve(bounds)) : this.polygons;
-        filted.forEach(pg => this.render(pg.coordinates, pg.bounds, granule));
+        filted.forEach(pg => this.__render(pg.coordinates, pg.bounds, granule, transform));
         this.lr.each(f);
+        this.lr = null;
     }
-    
 }
 
 class Polygon {
@@ -137,7 +137,8 @@ class Polygon {
     }
 }
 
-function rndp(p, g = 1) {
+function rndp(p, g = 1, transform = t => t) {
+    p = transform(p);
     return [p[0] - p[0] % g, p[1] - p[1] % g];
 }
 
@@ -148,3 +149,4 @@ function eqp(p0, p1) {
 function inRange(val, min, max) {
     return min < val && val < max;
 }
+
