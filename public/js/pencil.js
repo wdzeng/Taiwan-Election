@@ -8,57 +8,35 @@ export default class Pencil {
         this.polygons = [];
     }
 
-    addFeatureCollection(fc) {
-        fc.features.forEach(f => this.addFeature(f));
+    addFeatureCollection(name, fc) {
+        fc.features.forEach(f => this.addFeature(name, f));
     }
 
-    addFeature(fea) {
+    addFeature(name, fea) {
         switch (fea.geometry.type) {
             case 'Polygon':
-                fea.geometry.coordinates.forEach(c => this.addPolygon(c));
+                fea.geometry.coordinates.forEach(c => this.addPolygon(name, c));
                 return;
             case 'MultiPolygon':
-                fea.geometry.coordinates.forEach(c => c.forEach(c => this.addPolygon(c)));
+                fea.geometry.coordinates.forEach(c => c.forEach(c => this.addPolygon(name, c)));
                 return;
         }
     }
 
-    addPolygon(pg) {
-
-        // Set start point
-        let pp = rndp(this.proj(pg[0]), this.granule);
-
-        // Render lines
-        let np;
-        pg.slice(1).forEach(v => {
-
-            np = rndp(this.proj(v), this.granule);
-
-            // Check distinct points
-            if (eqp(pp, np)) return;
-
-            // Render new line
-            this.lr.fill(pp, np);
-            this.updated = false;
-
-            pp = np;
-        });
-    }
-
-    prepare(object) {
+    prepare(name, object) {
 
         switch (object.type) {
 
             case 'Feature':
-                this.addFeature(object);
+                this.addFeature(name, object);
                 return;
 
             case 'FeatureCollection':
-                this.addFeatureCollection(object);
+                this.addFeatureCollection(name, object);
                 return;
 
             case 'MultiLineString':
-                object.coordinates.forEach(c => this.addPolygon(c))
+                object.coordinates.forEach(c => this.addPolygon(name, c))
                 return;
         }
     }
@@ -104,20 +82,17 @@ export default class Pencil {
 
         // Render lines
         let np;
-        cords.slice(1).forEach(v => {
-            np = rndp(v, granule);
-
+        for (let i = 1; i < cords.length; i++) {
+            np = rndp(cords[i], granule);
             // Check distinct points
-            if (eqp(pp, np)) return;
-
+            if (eqp(pp, np)) continue;
             // Render new line
             this.lr.fill(pp, np);
-
             pp = np;
-        });
+        };
     }
 
-    addPolygon(cords, name) {
+    addPolygon(name, cords) {
 
         let first = this.proj(cords[0]), cvc = [first];
         let x0 = first[0], y0 = first[1], x1 = first[0], y1 = first[1];
