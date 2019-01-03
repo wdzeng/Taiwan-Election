@@ -1,4 +1,4 @@
-export default class Zoomer {
+class Zoomer {
 
     constructor(cvWidth, cvHeight) {
         this.cvw = cvWidth;
@@ -7,7 +7,6 @@ export default class Zoomer {
     }
 
     zoom(scale, offx, offy) {
-
         let newWidth = this.rec[2] / scale;
         let newHeight = this.rec[3] / scale;
 
@@ -21,16 +20,19 @@ export default class Zoomer {
     }
 
     transform() {
-
         return p => [
-            this.cvw * (p[0] - this.rec[0]) / this.rec[2],
-            this.cvh * (p[1] - this.rec[1]) / this.rec[3]
+            Math.round(this.cvw * (p[0] - this.rec[0]) / this.rec[2]),
+            Math.round(this.cvh * (p[1] - this.rec[1]) / this.rec[3])
         ];
     }
 
     bounds() {
-
-        return [this.rec[0], this.rec[1], this.rec[0] + this.rec[2], this.rec[1] + this.rec[3]];
+        return [
+            Math.round(this.rec[0]),
+            Math.round(this.rec[1]),
+            Math.round(this.rec[0] + this.rec[2]),
+            Math.round(this.rec[1] + this.rec[3])
+        ];
     }
 
 }
