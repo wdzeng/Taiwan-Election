@@ -1,7 +1,7 @@
 class Polygon {
 
-    constructor(coordinates, granule) {
-        let prev = round(coordinates[0], granule),
+    constructor(coordinates) {
+        let prev = coordinates[0],
             next,
             x0 = prev[0],
             y0 = prev[1],
@@ -10,7 +10,7 @@ class Polygon {
             arr = [prev];
 
         for (let i = 1; i < coordinates.length; i++) {
-            next = round(coordinates[i], granule);
+            next = coordinates[i];
             if (eq(prev, next)) continue;
             if (next[0] < x0) x0 = next[0];
             else if (next[0] > x1) x1 = next[0];
@@ -35,13 +35,13 @@ class Polygon {
 
 export class Pen {
 
-    constructor(geo, proj = dfProj, granule = 1 / 1024) {
+    constructor(geo, proj = dfProj) {
         switch (geo.type) {
             case 'MultiLineString':
-                this.polygons = geo.coordinates.map(c => new Polygon(c.map(p => proj(p)), granule));
+                this.polygons = geo.coordinates.map(c => new Polygon(c.map(p => proj(p))));
                 break;
             case 'MultiPolygon':
-                this.polygons = geo.coordinates.flat().map(c => new Polygon(c.map(p => proj(p)), granule));
+                this.polygons = geo.coordinates.flat().map(c => new Polygon(c.map(p => proj(p))));
                 break;
         }
     }
@@ -55,7 +55,7 @@ export class Pen {
     }
 
     _drawPolygon(ctx, poly, tf2, tf4, bbox) {
-        
+
         let bounds = poly.bounds();
         let tfBounds = tf4(bounds);
         if (isSep(bounds, bbox)) return;
@@ -77,16 +77,15 @@ export class Pen {
             ctx.lineTo(next[0], next[1]);
             prev = next;
         }
-        // ctx.rect(tfBounds[0], tfBounds[1], tfBounds[2]-tfBounds[0], tfBounds[3]-tfBounds[1]);
     }
 }
 
 export class Bucket {
 
-    constructor(geo, proj = dfProj, granule = 1 / 1024) {
+    constructor(geo, proj = dfProj) {
         switch (geo.type) {
             case 'MultiPolygon':
-                this.polygons = geo.coordinates.flat().map(c => new Polygon(c.map(p => proj(p)), granule));
+                this.polygons = geo.coordinates.flat().map(c => new Polygon(c.map(p => proj(p))));
                 break;
         }
     }
@@ -143,10 +142,6 @@ function isDot(bounds) {
 function drawDot(ctx, x, y) {
     ctx.moveTo(x, y);
     ctx.lineTo(x + 1, y + 1);
-}
-
-function round(point, granule) {
-    return [point[0] - (point[0] % granule), point[1] - (point[1] % granule)];
 }
 
 function dfProj(p) {
