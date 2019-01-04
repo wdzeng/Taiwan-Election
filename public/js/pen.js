@@ -35,7 +35,7 @@ class Polygon {
 
 export class Pen {
 
-    constructor(geo, proj = dfProj) {
+    constructor(geo, proj ) {
         switch (geo.type) {
             case 'MultiLineString':
                 this.polygons = geo.coordinates.map(c => new Polygon(c.map(p => proj(p))));
@@ -82,7 +82,7 @@ export class Pen {
 
 export class Bucket {
 
-    constructor(geo, proj = dfProj) {
+    constructor(geo, proj) {
         switch (geo.type) {
             case 'MultiPolygon':
                 this.polygons = geo.coordinates.flat().map(c => new Polygon(c.map(p => proj(p))));
@@ -142,14 +142,6 @@ function isDot(bounds) {
 function drawDot(ctx, x, y) {
     ctx.moveTo(x, y);
     ctx.lineTo(x + 1, y + 1);
-}
-
-function dfProj(p) {
-    // 800 * 1000
-    return [
-        p[0] * 269.09541442 - 32069.29340728416,
-        Math.atanh(Math.sin(p[1] * 0.01745329251)) * -15418.031541378445 + 7040.884490816347
-    ];
 }
 
 
