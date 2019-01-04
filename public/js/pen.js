@@ -33,9 +33,9 @@ class Polygon {
     }
 }
 
-class Pen {
+export class Pen {
 
-    constructor(geo, proj, granule = 1 / 256) {
+    constructor(geo, proj = dfProj, granule = 1 / 256) {
         switch (geo.type) {
             case 'MultiLineString':
                 this.polygons = geo.coordinates.map(c => new Polygon(c.map(p => proj(p)), granule));
@@ -47,22 +47,20 @@ class Pen {
     }
 
     draw(ctx, tf2, bbox) {
-        let tf4 = function (rec) {
+        this.polygons.forEach(p => this._drawPolygon(ctx, p, tf2, rec => {
             let lt = tf2([rec[0], rec[1]]);
             let rb = tf2([rec[2], rec[3]]);
             return [lt[0], lt[1], rb[0], rb[1]];
-        }
-        this.polygons.forEach(p => {
-            this._drawPolygon(ctx, p, tf2, tf4, bbox);
-        })
+        }, bbox));
     }
 
     _drawPolygon(ctx, poly, tf2, tf4, bbox) {
-
-        let bounds = tf4(poly.bounds());
+        
+        let bounds = poly.bounds();
+        let tfBounds = tf4(bounds);
         if (isSep(bounds, bbox)) return;
-        if (isDot(bounds)) {
-            drawDot(ctx, bounds[0], bounds[1]);
+        if (isDot(tfBounds)) {
+            drawDot(ctx, tfBounds[0], tfBounds[1]);
             return;
         }
 
@@ -79,12 +77,13 @@ class Pen {
             ctx.lineTo(next[0], next[1]);
             prev = next;
         }
+        // ctx.rect(tfBounds[0], tfBounds[1], tfBounds[2]-tfBounds[0], tfBounds[3]-tfBounds[1]);
     }
 }
 
-class Bucket {
+export class Bucket {
 
-    constructor(geo, proj, granule = 1 / 256) {
+    constructor(geo, proj = dfProj, granule = 1 / 256) {
         switch (geo.type) {
             case 'MultiPolygon':
                 this.polygons = geo.coordinates.flat().map(c => new Polygon(c.map(p => proj(p)), granule));
@@ -92,29 +91,30 @@ class Bucket {
         }
     }
 
-    draw(ctx, tf2, bbox) {
-        let tf4 = function (rec) {
-            let lt = tf2([rec[0], rec[1]]);
-            let rb = tf2([rec[2], rec[3]]);
+    draw(ctx, trlt2, bbox) {
+        let trlt4 = function (rec) {
+            let lt = trlt2([rec[0], rec[1]]);
+            let rb = trlt2([rec[2], rec[3]]);
             return [lt[0], lt[1], rb[0], rb[1]];
         }
         this.polygons.forEach(p => {
-            this._drawPolygon(ctx, p, tf2, tf4, bbox);
+            this._drawPolygon(ctx, p, trlt2, trlt4, bbox);
         })
     }
 
-    _drawPolygon(ctx, poly, tf2, tf4, bbox) {
+    _drawPolygon(ctx, poly, trlt2, trlt4, bbox) {
 
-        let bounds = tf4(poly.bounds());
-        if (isSep(bounds, bbox) || isDot(bounds)) return;
-        
+        let bounds = poly.bounds();
+        let tfBounds = trlt4(bounds);
+        if (isSep(bounds, bbox) || isDot(tfBounds)) return;
+
         let coos = poly.coordiates(),
-            prev = tf2(coos[0]),
+            prev = trlt2(coos[0]),
             next;
 
         ctx.moveTo(prev[0], prev[1]);
         for (let i = 1, len = coos.length; i < len; i++) {
-            next = tf2(coos[i]);
+            next = trlt2(coos[i]);
             if (eq(prev, next)) {
                 continue;
             }
@@ -149,6 +149,13 @@ function round(point, granule) {
     return [point[0] - (point[0] % granule), point[1] - (point[1] % granule)];
 }
 
+function dfProj(p) {
+    // 800 * 1000
+    return [
+        p[0] * 269.09541442 - 32069.29340728416,
+        Math.atanh(Math.sin(p[1] * 0.01745329251)) * -15418.031541378445 + 7040.884490816347
+    ];
+}
 
 
 
