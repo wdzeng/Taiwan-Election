@@ -33,7 +33,8 @@ export default class Zoomer {
                 Math.round(rec[1]),
                 Math.round(rec[0] + rec[2]),
                 Math.round(rec[1] + rec[3])
-            ]
+            ],
+            scale: this.scl
         };
     }
 
@@ -52,12 +53,13 @@ export default class Zoomer {
     }
 
     dragTo(offset) {
-        this.tmpBounds[0] = this.startBounds[0] + (offset[0] - this.m0[0]) * this.scl;
-        this.tmpBounds[1] = this.startBounds[1] + (offset[1] - this.m0[1]) * this.scl;
+        this.tmpBounds[0] = this.startBounds[0] - (offset[0] - this.m0[0]) / this.scl;
+        this.tmpBounds[1] = this.startBounds[1] - (offset[1] - this.m0[1]) / this.scl;
         return this.transform(this.tmpBounds);
     }
 
     dragEnd() {
+        if (!this.tmpBounds) return;
         this.rec = this.tmpBounds;
         this.startBounds = undefined;
         this.m0 = undefined;
@@ -68,5 +70,4 @@ export default class Zoomer {
         this.rec = [0, 0, this.cvw, this.cvh];
         this.scl = 1;
     }
-
 }

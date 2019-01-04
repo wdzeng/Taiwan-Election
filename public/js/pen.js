@@ -35,7 +35,7 @@ class Polygon {
 
 export class Pen {
 
-    constructor(geo, proj = dfProj, granule = 1 / 256) {
+    constructor(geo, proj = dfProj, granule = 1 / 1024) {
         switch (geo.type) {
             case 'MultiLineString':
                 this.polygons = geo.coordinates.map(c => new Polygon(c.map(p => proj(p)), granule));
@@ -83,7 +83,7 @@ export class Pen {
 
 export class Bucket {
 
-    constructor(geo, proj = dfProj, granule = 1 / 256) {
+    constructor(geo, proj = dfProj, granule = 1 / 1024) {
         switch (geo.type) {
             case 'MultiPolygon':
                 this.polygons = geo.coordinates.flat().map(c => new Polygon(c.map(p => proj(p)), granule));
