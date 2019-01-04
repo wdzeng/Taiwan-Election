@@ -10,6 +10,9 @@ export default class Locator {
     }
 
     zoom(scale, offx, offy) {
+
+        offx -= this.padding;
+        offy -= this.padding;
         this.scl *= scale;
 
         let newWidth = this.rec[2] / scale;
@@ -69,12 +72,12 @@ export default class Locator {
     dragStart(offset) {
         this.startBounds = this.rec.slice(0);
         this.tmpBounds = this.rec.slice(0);
-        this.m0 = offset;
+        this.m0 = [offset[0] - this.padding, offset[1] - this.padding];
     }
 
     dragTo(offset) {
-        let newx = this.startBounds[0] - (offset[0] - this.m0[0]) / this.scl,
-            newy = this.startBounds[1] - (offset[1] - this.m0[1]) / this.scl,
+        let newx = this.startBounds[0] - (offset[0] - this.m0[0] - this.padding) / this.scl,
+            newy = this.startBounds[1] - (offset[1] - this.m0[1] - this.padding) / this.scl,
             newrec = ensureInRange([newx, newy, this.rec[2], this.rec[3]], [this.drw, this.drh], this.padding);
         if (eqrec(newrec, this.tmpBounds)) return null;
         this.tmpBounds = newrec;
