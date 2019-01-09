@@ -35,7 +35,7 @@ class Polygon {
 
 export class Pen {
 
-    constructor(geo, proj ) {
+    constructor(geo, proj) {
         switch (geo.type) {
             case 'MultiLineString':
                 this.polygons = geo.coordinates.map(c => new Polygon(c.map(p => proj(p))));
@@ -57,8 +57,9 @@ export class Pen {
     _drawPolygon(ctx, poly, tf2, tf4, bbox) {
 
         let bounds = poly.bounds();
-        let tfBounds = tf4(bounds);
         if (isSep(bounds, bbox)) return;
+
+        let tfBounds = tf4(bounds);
         if (isDot(tfBounds)) {
             drawDot(ctx, tfBounds[0], tfBounds[1]);
             return;

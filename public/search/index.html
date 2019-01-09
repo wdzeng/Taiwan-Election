@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Import JQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- Import d3.js and TopoJSON -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
+        crossorigin="anonymous">
+
+    <script src="/js/tw-town.js"></script>
+    <script src="/js/tw-leg-ectr.js"></script>
+    <script src="/js/ideology.js"></script>
+    <script src="./script.js"></script>
+
+    <style>
+        :root{
+            --bg-color: #FAFAFA;
+            --header-footer-bg-color: #EEE
+        }
+        #cv-cont {
+            height: 480px;
+            overflow: hidden;
+        }
+        .nav-tabs .nav-link.active{
+            background: inherit;
+            border-bottom-color: var(--bg-color);
+        }
+        header {
+            padding-top: 1em;
+            padding-bottom: 1em;
+        }
+        header, footer{
+            background: var(--header-footer-bg-color);
+        }
+        main {
+            padding-bottom: 3em;
+            padding-top: 3em;
+            background: var(--bg-color);
+        }
+        footer {
+            min-height: 130px;
+            box-shadow: 0 50vh 0 50vh var(--header-footer-bg-color);
+        }
+        option.disabled {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <a class="navbar-brand" href="#">台灣選舉與地理資料視覺化</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+        </div>
+        </nav>
+        </div>
+    </header>
+    <main>
+        <section>
+            <div class="container">
+                <div class="row">
+
+                    <div class="col-lg-5" style="position: relative">
+                        <!-- Nav tabs -->
+                        <ul class="nav nav-tabs">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-toggle="tab" href="#election">選舉</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link disabled" data-toggle="tab">戶口</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link disabled" data-toggle="tab">自然</a>
+                        </ul>
+
+                        <!-- Tab panes -->
+                        <div class="tab-content">
+                            <div class="tab-pane container active" id="election" style="padding-top: 18px; height:100%">
+
+                                <div class="form-group row">
+                                    <label for="e-event" class="col-md-3 col-form-label">選舉條目</label>
+                                    <div class="col-md-9">
+                                        <select class="form-control" id="e-event">
+                                            <option value="2008-leg" year="2008" tbName='legislator'>2008 區域立委選舉</option>
+                                            <option value="2008-party" year="2008" tbName='party_listed_legislator'>2008 不分區立委選舉</option>
+                                            <option value="2008-pres" year="2008" tbName="president">2008 總統選舉</option>
+                                            <option value="2009-local" year="2009" tbName="local">2009 地方選舉</option>
+                                            <option value="2010-local" year="2010" tbName="local">2010 五都選舉</option>
+                                            <option value="2012-leg" year="2012" tbName="legislator">2012 區域立委選舉</option>
+                                            <option value="2012-party" year="2012" tbName="party_listed_legislator">2012 不分區立委選舉</option>
+                                            <option value="2012-pres" year="2012" tbName="president">2012 總統選舉</option>
+                                            <option value="2014-local" year="2014" tbName="local">2014 地方選舉</option>
+                                            <option value="2016-leg" year="2016" tbName="legislator">2016 區域立委選舉</option>
+                                            <option value="2016-party" year="2016" tbName="party_listed_legislator">2016 不分區立委選舉</option>
+                                            <option value="2016-pres" year="2016" tbName="president">2016 總統選舉</option>
+                                            <option selected value="2018-local" year="2018" tbName="local">2018 地方選舉</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="area" class="col-md-3 col-form-label">查詢範圍</label>
+                                    <div class="col-md-9 input-group">
+                                        <select class="form-control" id="sec-county">
+                                            <option selected value="0">全國</option>
+                                            <option value="700">基隆市</option>
+                                            <option value="100">台北市</option>
+                                            <option value="200">新北市</option>
+                                            <option value="300">桃園市</option>
+                                            <option value="1000">新竹縣</option>
+                                            <option value="800">新竹市</option>
+                                            <option value="1100">苗栗縣</option>
+                                            <option value="400">台中市</option>
+                                            <option value="1300">南投縣</option>
+                                            <option value="1200">彰化縣</option>
+                                            <option value="1400">雲林縣</option>
+                                            <option value="1500">嘉義縣</option>
+                                            <option value="900">嘉義市</option>
+                                            <option value="500">台南市</option>
+                                            <option value="600">高雄市</option>
+                                            <option value="1600">屏東縣</option>
+                                            <option value="1700">宜蘭縣</option>
+                                            <option value="1800">花蓮縣</option>
+                                            <option value="1900">台東縣</option>
+                                            <option value="2000">澎湖縣</option>
+                                        </select>
+                                        <select class="form-control" id="sec-ectr" style="display: none">
+                                            <option selected value="0">全境</option>
+                                        </select>
+                                        <select disabled class="form-control" id="sec-town">
+                                            <option selected value="0">全境</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="e-event" class="col-md-3 col-form-label">顆粒粗細</label>
+                                    <div class="col-md-9">
+                                        <select class="form-control" id="granule">
+                                            <option value="c">縣市</option>
+                                            <option value="e" class="disabled" id="opt-ectr">選區</option>
+                                            <option selected value="d" id="opt-town">鄉鎮市區</option>
+                                            <option value="v">村里</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <fieldset class="form-group" id="sec-target">
+                                    <div class="form-group row">
+                                        <legend for="searched" class="col-md-3 col-form-label">查詢對象</legend>
+                                        <div class="col-md-9">
+                                            <div class="form-check form-check-inline py-2">
+                                                <input class="form-check-input" type="radio" name="searched" value="lead" checked>
+                                                <label class="form-check-label">領先者</label>
+                                            </div>
+                                            <div class="form-check form-check-inline py-2">
+                                                <input class="form-check-input" type="radio" name="searched" value="elect">
+                                                <label class="form-check-label">當選者</label>
+                                            </div>
+                                            <br />
+                                            <div class="form-check form-check-inline" style="width: 100%">
+                                                <input class="form-check-input" type="radio" name="searched" value="other" id="sec-cus">
+                                                <input disabled class="form-control" style="width:100%" type="text" id="txt-cus" placeholder="自訂搜尋" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+
+                                <fieldset class="form-group" id="colored">
+                                    <div class="form-group row">
+                                        <legend for="searched" class="col-md-3 col-form-label">套色選項</legend>
+                                        <div class="col-md-9">
+                                            <div class="form-check form-check-inline py-2">
+                                                <input class="form-check-input" type="radio" name="colored" value="one" checked>
+                                                <label class="form-check-label">贏者全拿</label>
+                                            </div>
+                                            <div class="form-check form-check-inline py-2">
+                                                <input class="form-check-input" type="radio" name="colored" value="soft">
+                                                <label class="form-check-label">表得票率</label>
+                                            </div>
+                                            <div class="form-check form-check-inline py-2">
+                                                <input class="form-check-input" type="radio" name="colored" value="strict">
+                                                <label class="form-check-label">裏得票率</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+
+                                <div class="form-group row" style="height: 100%">
+                                    <div class="col-12">
+                                        <button id="draw" class="float-right btn btn-outline-secondary" style="width: 30%">Draw</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-7">
+                        <div id="cv-cont"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
+        crossorigin="anonymous"></script>
+
+    <script src="./form-control.js" type="module"></script>
+</body>
+
+</html>

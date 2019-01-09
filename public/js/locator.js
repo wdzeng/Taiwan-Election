@@ -1,8 +1,9 @@
 export default class Locator {
 
     constructor(cvWidth, cvHeight, drWidth, drHeight, padding = 0) {
-        this.cvw = cvWidth - 2 * padding;
-        this.cvh = cvHeight - 2 * padding;
+        const pad2 = padding * 2;
+        this.cvw = cvWidth - pad2;
+        this.cvh = cvHeight - pad2;
         this.drw = drWidth;
         this.drh = drHeight;
         this.padding = padding;
@@ -30,16 +31,18 @@ export default class Locator {
     }
 
     transform(bbox = this.rec) {
+        const vspad = this.padding,
+            vspad2 = vspad * 2;
         return {
             translate: p => [
-                Math.round(this.padding + this.cvw * (p[0] - bbox[0]) / bbox[2]),
-                Math.round(this.padding + this.cvh * (p[1] - bbox[1]) / bbox[3])
+                Math.round(vspad + this.cvw * (p[0] - bbox[0]) / bbox[2]),
+                Math.round(vspad + this.cvh * (p[1] - bbox[1]) / bbox[3])
             ],
             bounds: [
-                Math.round(bbox[0]),
-                Math.round(bbox[1]),
-                Math.round(bbox[0] + bbox[2]),
-                Math.round(bbox[1] + bbox[3])
+                Math.round(bbox[0] - vspad),
+                Math.round(bbox[1] - vspad),
+                Math.round(bbox[0] + bbox[2] + vspad2),
+                Math.round(bbox[1] + bbox[3] + vspad2)
             ],
             scale: this.scl
         };
@@ -70,8 +73,8 @@ export default class Locator {
     }
 
     dragStart(offset) {
-        this.startBounds = this.rec.slice(0);
-        this.tmpBounds = this.rec.slice(0);
+        this.startBounds = this.rec.slice(0); // copy array
+        this.tmpBounds = this.rec.slice(0);   // copy array
         this.m0 = [offset[0] - this.padding, offset[1] - this.padding];
     }
 
