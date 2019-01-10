@@ -1,4 +1,8 @@
 "use strict";
+import * as E from '/js/tw-leg-ectr.js';
+import * as T from '/js/tw-town.js';
+import * as Ideo from '/js/ideology.js';
+import Map from '/js/map.js';
 
 /*  Form Controler */
 
@@ -49,7 +53,7 @@ function refreshElectorals() {
         return;
     }
 
-    let options = getAllElectorals().filter(e => Math.floor(e / 100) * 100 == coun);
+    let options = E.getAllElectorals().filter(e => Math.floor(e / 100) * 100 == coun);
     if (options.length > 1) {
         options = options.sort((a, b) => a - b)
             .map(e => {
@@ -67,7 +71,7 @@ function refreshElectorals() {
 function refreshTowns() {
 
     function optimizeTownName(id) {
-        return toSimpleTai(getTownNameById(id).substring(3));
+        return toSimpleTai(T.getTownNameById(id).substring(3));
     }
     const all = '<option selected value="0">全境</option>';
 
@@ -80,7 +84,7 @@ function refreshTowns() {
             return;
         }
 
-        let options = getAllTownIds().filter(id => id != coun && Math.floor(id / 100) * 100 == coun)
+        let options = T.getAllTownIds().filter(id => id != coun && Math.floor(id / 100) * 100 == coun)
             .sort((a, b) => a - b)
             .map(id => `<option value="${id}">${optimizeTownName(id)}</option>`)
             .join();
@@ -100,13 +104,13 @@ function refreshTowns() {
         return;
     }
 
-    if (!isGoodElectoral(ectr)) {
+    if (!E.isGoodElectoral(ectr)) {
         $secTown.html('<option value="0">全境</option>').attr('disabled', true);
         return;
     }
 
-    let options = getAllTownIds()
-        .filter(id => id != coun && Math.floor(id / 100) * 100 == coun && getElectoral(id) == ectr);
+    let options = T.getAllTownIds()
+        .filter(id => id != coun && Math.floor(id / 100) * 100 == coun && E.getElectoral(id) == ectr);
     if (options.length == 1) {
         $secTown.html(`<option val=${options[0]}>${optimizeTownName(options[0])}</option>`)
             .attr('disabled', false)
@@ -143,7 +147,7 @@ function refreshGranule() {
 
     let ectr = $secEctr.val();
     if (ectr == 0) {
-        showOption($grTown, isGoodElectoral(coun));
+        showOption($grTown, E.isGoodElectoral(coun));
         return;
     }
 
@@ -192,34 +196,10 @@ $secTown.change(e => refreshGranule());
 
 /* Map Drawing functions */
 
-import Map from '/js/map.js';
-
 const mapContainer = document.getElementById('cv-cont');
 $('#draw').click(queryData);
 
 function layerGrouper(qdata, resOnly, layers) {
-
-    function ideologier(party) {
-        if (party === null) return INDEPENDENT;
-        switch (party) {
-            case '中國國民黨': return AUTHORITARIAN;
-            case '民主進步黨': return DEMOCRACY;
-            case '時代力量': return EQUALITY;
-            case '親民黨': case '民國黨': return OUTSIDER;
-            default: return AUTOCRACY;
-        }
-    }
-
-    function dfJudger(val) {
-        if (val >= 0.725) return 'xxl';
-        if (val >= 0.650) return 'xl';
-        if (val >= 0.575) return 'l';
-        if (val >= 0.500) return 'm';
-        if (val >= 0.425) return 's';
-        if (val >= 0.350) return 'xs';
-        if (val >= 0.005) return 'xxs';
-        return 'foul';
-    }
 
     function createNumberJudger() {
         if (resOnly || qdata.length == 1) return () => 'r';
@@ -247,7 +227,7 @@ function layerGrouper(qdata, resOnly, layers) {
         else if (res.ectr && layers[1]) k = res.id + ',' + res.ectr; // electoral
         else k = res.id; // town or county
 
-        col = ideologier(res.party)[numJudger(res.ratio || res.sratio)];
+        col = Ideo.colorize(res.party)[numJudger(res.ratio || res.sratio)];
         idToCol[k] = col;
     });
 
@@ -286,14 +266,6 @@ function layerGrouper(qdata, resOnly, layers) {
 
     let stroker = function (topo) {
 
-        function key(g) {
-            if (g.properties.v) return g.properties.d + ',' + g.properties.v;
-            else if (g.properties.d) return g.properties.d;
-            else if (g.properties.c) return g.properties.c;
-            else if (g.properties.e) return (Math.floor(g.properties.e / 100) * 100) + ',' + g.properties.e;
-            throw "Unknown geometry: " + g;
-        }
-
         function county(g) {
             return Math.floor(g.properties.d / 100) * 100;
         }
@@ -311,7 +283,7 @@ function layerGrouper(qdata, resOnly, layers) {
                 && (involve(a) || involve(b)); // effective
         }) : null;
         let se = layers[1] ? topojson.mesh(topo, topo.objects.villages, (a, b) => {
-            return a.properties.e !== b.properties.e && (involve(a) || involve(b)); // effective
+            return a.properties.e !== b.properties.e;
         }) : null;
         let sc = layers[0] ? topojson.mesh(topo, topo.objects.villages, (a, b) => {
             return a !== b
@@ -420,17 +392,20 @@ async function drawMap(data) {
             }
             switch (k) {
                 case 'villages':
-                    ctx.lineWidth = 0.25;
-                    ctx.strokeStyle = 'white';
-                    return true;
-                case 'towns':
                     ctx.lineWidth = 0.5;
                     ctx.strokeStyle = 'white';
+                    ctx.setLineDash([2,2]);
+                    return true;
+                case 'towns':
+                    ctx.lineWidth = 0.75;
+                    ctx.strokeStyle = 'white';
+                    ctx.setLineDash([]);
                     return true;
                 case 'counties':
                 case 'electorals':
                     ctx.lineWidth = 1.5;
                     ctx.strokeStyle = 'black';
+                    ctx.setLineDash([]);
                     return true;
             }
             return false;

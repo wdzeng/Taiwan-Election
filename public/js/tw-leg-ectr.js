@@ -2,15 +2,15 @@ let ectrs = [101, 102, 103, 104, 105, 106, 107, 108, 201, 202, 203, 204, 205, 20
 
 let goodEctrs = [106, 104, 201, 210, 211, 212, 302, 305, 401, 403, 405, 406, 408, 500, 501, 502, 503, 504, 505, 601, 602, 603, 604, 608];
 
-function getAllElectorals() {
+export function getAllElectorals() {
     return ectrs;
 }
 
-function isGoodElectoral(checked) {
+export function isGoodElectoral(checked) {
     return checked >= 700 || goodEctrs.includes(Number(checked));
 }
 
-function getElectoral(did, vname) {
+export function getElectoral(did, vname) {
 
     did = Number(did);
     let cid = did - did % 100;

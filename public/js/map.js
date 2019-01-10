@@ -1,6 +1,5 @@
 import { Pen, Bucket } from '/js/pen.js';
 import Zoomer from '/js/locator.js';
-const MAP_PATH = '/res/map5.json';
 
 function dfProj(p) {
     // 725 * 1000
