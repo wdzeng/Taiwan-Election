@@ -1,4 +1,4 @@
-import { Pen, Bucket } from '/js/pen.js';
+import { Pen as Pencil, Bucket, MapData } from '/js/pen.js';
 import Zoomer from '/js/locator.js';
 
 function dfProj(p) {
@@ -67,10 +67,12 @@ export default class Map {
             _this.draw(tm.translate, tm.bounds, tm.scale);
         }
         function mousedownListener(e) {
+            if (e.type == 'mousedown' && e.button != 0) return;
             canvas.addEventListener('mousemove', mousemoveListener);
             _this.z.dragStart([e.offsetX * dpi, e.offsetY * dpi]);
         }
         function mouseUpListener(e) {
+            if (e.type == 'mouseup' && e.button != 0) return;
             canvas.removeEventListener('mousemove', mousemoveListener);
             _this.z.dragEnd();
         }
@@ -84,32 +86,31 @@ export default class Map {
         this.ctx = canvas.getContext('2d');
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
+        this.dpi = dpi;
     }
 
-    async setLayer(fgrouper, sgrouper, nLayer) {
+    async setLayer(fgrouper, sgrouper) {
+
         this.buckets = {};
         this.pens = {};
+        this.mapData = undefined;
         this.z.reset();
-        if (!fgrouper && !sgrouper) return;
 
-        let topo = await loadMap(nLayer),
-            group,
-            geo;
+        let topo = await loadMap(),
+            layers, geo;
 
-        if (fgrouper) {
-            group = fgrouper(topo);
-            for (let k in group) {
-                geo = group[k];
-                if (geo) this.buckets[k] = new Bucket(geo, dfProj);
-            }
+        this.mapData = new MapData(await geoMap(), dfProj);
+
+        layers = fgrouper(topo);
+        for (let k in layers) {
+            geo = layers[k];
+            if (geo) this.buckets[k] = new Bucket(geo, dfProj);
         }
 
-        if (sgrouper) {
-            group = sgrouper(topo);
-            for (let k in group) {
-                geo = group[k];
-                if (geo) this.pens[k] = new Pen(geo, dfProj);
-            }
+        layers = sgrouper(topo);
+        for (let k in layers) {
+            geo = layers[k];
+            if (geo) this.pens[k] = new Pencil(geo, dfProj);
         }
     }
 
@@ -123,14 +124,14 @@ export default class Map {
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         for (let bname in this.buckets) {
-            if (this.styler(bname, this.ctx, false)) {
+            if (this.styler(bname, this.ctx, scale, false)) {
                 this.ctx.beginPath();
                 this.buckets[bname].draw(this.ctx, trlt, bbox);
                 this.ctx.fill();
             }
         }
         for (let pname in this.pens) {
-            if (this.styler(pname, this.ctx, true)) {
+            if (this.styler(pname, this.ctx, scale, true)) {
                 this.ctx.beginPath();
                 this.pens[pname].draw(this.ctx, trlt, bbox);
                 this.ctx.stroke();
@@ -148,32 +149,54 @@ export default class Map {
         let tm = this.z.transform();
         this.draw(tm.translate, tm.bounds, tm.scale);
     }
+
+    follow(follower) {
+        if (!this.mapData) return;
+        if (follower) {
+            let _this = this;
+            this.tracker = function (e) {
+                if (e.button == 1 || e.buttons == 1) return;
+                let offset = [e.offsetX * _this.dpi, e.offsetY * _this.dpi];
+                offset = _this.z.draft(offset);
+                let poly = _this.mapData.parent(offset);
+                follower(poly);
+            }
+            this.canvas.addEventListener('mousemove', this.tracker);
+        }
+        else {
+            this.canvas.removeEventListener('mousemove', this.tracker);
+        }
+    }
 }
 
 let loadMap = (function () {
 
-    let topo = {};
+    let topo = null;
 
-    function readMap(mapPath) {
+    function readMap() {
         return new Promise((resolve) => {
-            d3.json(mapPath).then(topo => resolve(topo));
+            d3.json('/res/map20.json').then(topo => resolve(topo));
         });
     }
 
-    function path(nLayer = 20) {
-        return '/res/map20.json';
-        /*
-        if (nLayer >= 8) return '/res/map5.json';
-        if (nLayer >= 4) return '/res/map20.json';
-        return '/res/map.json'
-        */
+    return async function () {
+        if (!topo) {
+            topo = await readMap();
+        }
+        return topo;
+    }
+})();
+
+let geoMap = (function () {
+
+    let geojson = null;
+
+    return async function () {
+        if (!geojson) {
+            let topo = await loadMap();
+            geojson = topojson.feature(topo, topo.objects.villages);
+        }
+        return geojson;
     }
 
-    return async function (nLayer) {
-        let mapPath = path(nLayer);
-        if (!topo[mapPath]) {
-            topo[mapPath] = await readMap(mapPath);
-        }
-        return topo[mapPath];
-    }
 })();

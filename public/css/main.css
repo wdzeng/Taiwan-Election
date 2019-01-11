@@ -1,0 +1,61 @@
+:root {
+    --bg-color: #FAFAFA;
+    --header-footer-bg-color: #EEE
+}
+
+body {
+    background: var(--bg-color);
+}
+
+header {
+    padding-top: 1em;
+    padding-bottom: 1em;
+}
+
+header, footer {
+    background: var(--header-footer-bg-color);
+}
+
+main {
+    padding-bottom: 3em;
+    padding-top: 3em;
+}
+
+footer {
+    min-height: 130px;
+    box-shadow: 0 50vh 0 50vh var(--header-footer-bg-color);
+}
+
+.nav-tabs .nav-link.active {
+    background: inherit;
+    border-bottom-color: var(--bg-color);
+}
+
+option.disabled {
+    display: none;
+}
+
+#cv-cont {
+    height: 480px;
+    overflow: hidden;
+}
+
+#map-legend span.legend-box {
+    display: inline-block;
+    width: 34px;
+    height: 0.5em;
+    margin-right: 4px;
+    overflow: hidden;
+    margin-bottom: 2px;
+    text-align: center;
+    padding: 0;
+}
+
+#map-legend span.legend-text {
+    height: inherit;
+    font-size: 8px;
+}
+
+#map-legend p {
+    margin-bottom: auto;
+}

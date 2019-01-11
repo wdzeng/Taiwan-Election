@@ -89,8 +89,8 @@ export const ORANGE = {
     r: '#ea7500'
 }
 
-export function colorize(party) {
-    if (party === null) return GREY;
+export function colorize(party, grey = true) {
+    if (party === null) return (grey && GREY) || RED;
     switch (party) {
         case '中國國民黨': return BLUE;
         case '民主進步黨': case '綠黨': case '綠黨社會民主黨聯盟': return GREEN;
@@ -99,5 +99,16 @@ export function colorize(party) {
         case '中華統一促進黨': case '社會民主黨': case '無黨團結聯盟': return RED;
         case '信心希望聯盟': return PEACH;
     }
-    return GREY;
+    return (grey && GREY) || RED;
 }
+
+export function partyComparator(a, b) {
+    return partyId(a) - partyId(b);
+}
+
+function partyId(p) {
+    let id = parties.indexOf(p);
+    return id == -1 ? 9999 : id;
+}
+
+let parties = ['中國國民黨', '民主進步黨', '時代力量', '親民黨', '民國黨', '綠黨', '社會民主黨', '台灣團結聯盟', '無黨團結聯盟', '綠黨社會民主黨聯盟', '新黨'];

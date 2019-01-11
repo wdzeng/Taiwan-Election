@@ -120,6 +120,21 @@ export default class Locator {
         }
         this.rec = [x, y, w, h];
     }
+
+    draft(p) {
+        return [
+            (p[0] - this.padding) * this.rec[2] / this.cvw + this.rec[0],
+            (p[1] - this.padding) * this.rec[3] / this.cvh + this.rec[1],
+        ]
+    }
+
+    pureTranslate(bbox = this.rec) {
+        let _this = this;
+        return p => [
+            _this.padding + _this.cvw * (p[0] - bbox[0]) / bbox[2],
+            _this.padding + _this.cvh * (p[1] - bbox[1]) / bbox[3]
+        ]
+    }
 }
 
 function ensureInRange(tested, dimension) {

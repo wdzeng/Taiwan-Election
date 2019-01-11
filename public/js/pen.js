@@ -1,6 +1,7 @@
 class Polygon {
 
-    constructor(coordinates) {
+    constructor(coordinates, prop) {
+
         let prev = coordinates[0],
             next,
             x0 = prev[0],
@@ -22,6 +23,7 @@ class Polygon {
 
         this._coordinates = arr;
         this._bounds = [x0, y0, x1, y1];
+        this._prop = prop;
     }
 
     bounds() {
@@ -30,6 +32,40 @@ class Polygon {
 
     coordiates() {
         return this._coordinates;
+    }
+
+    surround(p) {
+
+        let x = p[0],
+            y = p[1];
+
+        // Check in bounds
+        if (x < this._bounds[0] || x > this._bounds[2]
+            || y < this.bounds[1] || y > this.bounds[3])
+            return false;
+
+        let res = false,
+            xi,
+            xj,
+            yi,
+            yj,
+            intersect;
+
+        for (let i = 0, j = this._coordinates.length - 1; i < this._coordinates.length; j = i++) {
+            xi = this._coordinates[i][0];
+            yi = this._coordinates[i][1];
+            xj = this._coordinates[j][0];
+            yj = this._coordinates[j][1];
+            intersect = ((yi > y) != (yj > y))
+                && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (intersect) res = !res;
+        }
+
+        return res;
+    };
+
+    properties() {
+        return this._prop;
     }
 }
 
@@ -145,7 +181,21 @@ function drawDot(ctx, x, y) {
     ctx.lineTo(x + 1, y + 1);
 }
 
+export class MapData {
 
+    constructor(geoObj, proj) {
+        this._polys = [];
+        let prop;
+        geoObj.features.forEach(g => {
+            prop = g.properties;
+            g.geometry.coordinates.forEach(c => {
+                this._polys.push(new Polygon(c.map(point => proj(point)), prop));
+            });
+        });
+    }
 
-
-
+    parent(p) {
+        let poly = this._polys.find(poly => poly.surround(p));
+        return poly ? poly.properties() : null;
+    }
+}

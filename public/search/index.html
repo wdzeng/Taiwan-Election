@@ -13,42 +13,8 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
         crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/main.css">
 
-    <script src="./script.js"></script>
-
-    <style>
-        :root{
-            --bg-color: #FAFAFA;
-            --header-footer-bg-color: #EEE
-        }
-        #cv-cont {
-            height: 480px;
-            overflow: hidden;
-        }
-        .nav-tabs .nav-link.active{
-            background: inherit;
-            border-bottom-color: var(--bg-color);
-        }
-        header {
-            padding-top: 1em;
-            padding-bottom: 1em;
-        }
-        header, footer{
-            background: var(--header-footer-bg-color);
-        }
-        main {
-            padding-bottom: 3em;
-            padding-top: 3em;
-            background: var(--bg-color);
-        }
-        footer {
-            min-height: 130px;
-            box-shadow: 0 50vh 0 50vh var(--header-footer-bg-color);
-        }
-        option.disabled {
-            display: none;
-        }
-    </style>
 </head>
 
 <body>
@@ -65,12 +31,13 @@
         </nav>
         </div>
     </header>
+
     <main>
         <section>
             <div class="container">
                 <div class="row">
 
-                    <div class="col-lg-5" style="position: relative">
+                    <div class="col-lg-5">
                         <!-- Nav tabs -->
                         <ul class="nav nav-tabs">
                             <li class="nav-item">
@@ -81,6 +48,7 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link disabled" data-toggle="tab">自然</a>
+                            </li>
                         </ul>
 
                         <!-- Tab panes -->
@@ -201,17 +169,33 @@
                                         <button id="draw" class="float-right btn btn-outline-secondary" style="width: 30%">Draw</button>
                                     </div>
                                 </div>
+
                             </div>
                         </div>
+
                     </div>
 
                     <div class="col-lg-7">
-                        <div id="cv-cont"></div>
+
+                        <div class="row mx-0" id="cv-cont">
+                        </div>
+
+                        <div class="row  mt-2">
+                            
+                            <div class="col-9" id="map-legend">
+                            </div>
+                            
+                            <div class="col-3" id="map-info">
+                            </div>
+
+                        </div>
+
                     </div>
                 </div>
             </div>
         </section>
     </main>
+
     <footer>
     </footer>
 
@@ -219,8 +203,8 @@
         crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
         crossorigin="anonymous"></script>
-
     <script src="./form-control.js" type="module"></script>
+
 </body>
 
 </html>
