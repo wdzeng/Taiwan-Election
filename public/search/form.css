@@ -1,0 +1,15 @@
+#election:not(.refer) .refer-only {
+    display: none;
+}
+
+#election:not(.leg) .leg-only {
+    display: none;
+}
+
+#election.refer .non-refer-only {
+    display: none;
+}
+
+#election.leg .non-leg-only {
+    display: none;
+}

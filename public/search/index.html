@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
         crossorigin="anonymous">
     <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="./form.css">
 
 </head>
 
@@ -57,7 +58,7 @@
 
                                 <div class="form-group row">
                                     <label for="e-event" class="col-md-3 col-form-label">選舉條目</label>
-                                    <div class="col-md-9">
+                                    <div class="col-md-9 input-group">
                                         <select class="form-control" id="e-event">
                                             <option value="2008-leg" year="2008" tbName='legislator'>2008 區域立委選舉</option>
                                             <option value="2008-party" year="2008" tbName='party_listed_legislator'>2008 不分區立委選舉</option>
@@ -72,6 +73,19 @@
                                             <option value="2016-party" year="2016" tbName="party_listed_legislator">2016 不分區立委選舉</option>
                                             <option value="2016-pres" year="2016" tbName="president">2016 總統選舉</option>
                                             <option selected value="2018-local" year="2018" tbName="local">2018 地方選舉</option>
+                                            <option value="refer">2018 全國公投</option>
+                                        </select>
+                                        <select class="form-control refer-only" id="refer">
+                                            <option value='7'>07 反空汙公投</optiom>
+                                            <option value='8'>08 反深澳公投</optiom>
+                                            <option value='9'>09 反核食公投</optiom>
+                                            <option value='10'>10 反婚姻平權公投</optiom>
+                                            <option value='11'>11 反性平教育公投</optiom>
+                                            <option value='12'>12 反同專法公投</optiom>
+                                            <option value='13'>13 東奧正名公投</optiom>
+                                            <option value='14'>14 婚姻平權公投</optiom>
+                                            <option value='15'>15 性平教育公投</optiom>
+                                            <option value='16'>16 擁核公投</optiom>
                                         </select>
                                     </div>
                                 </div>
@@ -102,10 +116,10 @@
                                             <option value="1900">台東縣</option>
                                             <option value="2000">澎湖縣</option>
                                         </select>
-                                        <select class="form-control" id="sec-ectr" style="display: none">
+                                        <select class="form-control leg-only" id="sec-ectr">
                                             <option selected value="0">全境</option>
                                         </select>
-                                        <select disabled class="form-control" id="sec-town">
+                                        <select class="form-control non-leg-only" id="sec-town">
                                             <option selected value="0">全境</option>
                                         </select>
                                     </div>
@@ -115,9 +129,9 @@
                                     <label for="e-event" class="col-md-3 col-form-label">顆粒粗細</label>
                                     <div class="col-md-9">
                                         <select class="form-control" id="granule">
-                                            <option value="c">縣市</option>
-                                            <option value="e" class="disabled" id="opt-ectr">選區</option>
-                                            <option selected value="d" id="opt-town">鄉鎮市區</option>
+                                            <option value="c" class="non-leg-only non-town-only">縣市</option>
+                                            <option value="e" class="leg-only" id="opt-ectr">選區</option>
+                                            <option selected value="d" class="non-leg-only" id="opt-town">鄉鎮市區</option>
                                             <option value="v">村里</option>
                                         </select>
                                     </div>
@@ -129,14 +143,28 @@
                                         <div class="col-md-9">
                                             <div class="form-check form-check-inline py-2">
                                                 <input class="form-check-input" type="radio" name="searched" value="lead" checked>
-                                                <label class="form-check-label">領先者</label>
+                                                <label class="form-check-label" id="lb-lead">
+                                                    <span class="non-refer-only">領先者</span>
+                                                    <span class="refer-only">領先方</span>
+                                                </label>
                                             </div>
                                             <div class="form-check form-check-inline py-2">
                                                 <input class="form-check-input" type="radio" name="searched" value="elect">
-                                                <label class="form-check-label">當選者</label>
+                                                <label class="form-check-label" id="lb-elect">
+                                                    <span class="non-refer-only">當選者</span>
+                                                    <span class="refer-only">勝方</span>
+                                                </label>
+                                            </div>
+                                            <div class="form-check form-check-inline py-2 refer-only">
+                                                <input class="form-check-input" type="radio" name="searched" value="for">
+                                                <label class="form-check-label" id="lb-for">正方</label>
+                                            </div>
+                                            <div class="form-check form-check-inline py-2 refer-only">
+                                                <input class="form-check-input" type="radio" name="searched" value="against">
+                                                <label class="form-check-label" id="lb-agasint">反方</label>
                                             </div>
                                             <br />
-                                            <div class="form-check form-check-inline" style="width: 100%">
+                                            <div class="form-check form-check-inline non-refer-only" style="width: 100%">
                                                 <input class="form-check-input" type="radio" name="searched" value="other" id="sec-cus">
                                                 <input disabled class="form-control" style="width:100%" type="text" id="txt-cus" placeholder="自訂搜尋" />
                                             </div>
@@ -150,7 +178,7 @@
                                         <div class="col-md-9">
                                             <div class="form-check form-check-inline py-2">
                                                 <input class="form-check-input" type="radio" name="colored" value="one" checked>
-                                                <label class="form-check-label">贏者全拿</label>
+                                                <label class="form-check-label">單一結果</label>
                                             </div>
                                             <div class="form-check form-check-inline py-2">
                                                 <input class="form-check-input" type="radio" name="colored" value="soft">
@@ -181,10 +209,10 @@
                         </div>
 
                         <div class="row  mt-2">
-                            
+
                             <div class="col-9" id="map-legend">
                             </div>
-                            
+
                             <div class="col-3" id="map-info">
                             </div>
 
@@ -204,6 +232,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
         crossorigin="anonymous"></script>
     <script src="./form-control.js" type="module"></script>
+    <script src="./data-map.js" type="module"></script>
 
 </body>
 
