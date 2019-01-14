@@ -143,9 +143,9 @@ export default class Map {
         this.styler = styler;
     }
 
-    async setLayerAndDraw(fgrouper, sgrouper, styler, nLayer) {
+    async setLayerAndDraw(fgrouper, sgrouper, styler) {
         this.setStyler(styler);
-        await this.setLayer(fgrouper, sgrouper, nLayer);
+        await this.setLayer(fgrouper, sgrouper);
         let tm = this.z.transform();
         this.draw(tm.translate, tm.bounds, tm.scale);
     }

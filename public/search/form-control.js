@@ -3,7 +3,6 @@ import * as E from '/js/tw-leg-ectr.js';
 import * as T from '/js/tw-town.js';
 import * as Ideo from '/js/ideology.js';
 import Map from '/js/map.js';
-import { ColorCollector as Colorer } from '/js/ideology.js';
 
 /* Form Controler */
 
@@ -106,420 +105,347 @@ $('input[name="searched"][type="radio"]').change(e => {
 // Miscellaneous codes should be cleaned ...
 
 const mapContainer = document.getElementById('cv-cont');
-$('#draw').click(e => queryData(drawMap));
+$('#draw').click(async () => {
+    let qdata = await queryData();
+    qdata = JSON.parse(qdata);
+    drawMap(qdata);
+});
 
-function referLayerGrouper(qdata, resOnly, layers, no) {
+function createSizeJudger(qdata, resOnly) {
+    let one = function (val) {
+        if (val === undefined) return [vals[0]];
+        return 'r';
+    }
+    if (resOnly || qdata.length === 1) return one;
 
-    function createNumberJudger() {
-        if (resOnly) return () => 'r';
-        let vals = qdata.map(d => d.ratio || d.sratio);
-        if (vals.length == 1) {
-            return function (val) {
-                if (val === undefined) return [vals[0]];
-                return 'r';
-            }
-        }
+    // Deal with multiple colors
+    let vals = qdata
+        .map(d => d.ratio || d.sratio || 0)
+        .sort((a, b) => a - b),
+        len = vals.length,
+        min = vals[Math.floor(len * 0.1)],
+        max = vals[Math.floor(len * 0.9)],
+        med = (max + min) / 2,
+        space = (max - min) / 5;
 
-        vals.sort((a, b) => a - b);
-        let len = vals.length,
-            min = vals[Math.floor(len * 0.1)],
-            max = vals[Math.floor(len * 0.9)],
-            diff = max - min;
+    let precision;
+    if (space >= 0.01) precision = 2;
+    else if (space >= 0.001) precision = 3;
+    else precision = 4;
 
-        // Determine the range
-        let xx;
-        if (diff > 0.05) xx = 100;
-        else if (diff > 0.005) xx = 1000;
-        else xx = 10000;
-        function xround(val) {
-            return Math.round(val * xx) / xx;
-        }
+    let mul = Math.pow(10, precision),
+        round = v => Math.round(v * mul) / mul;
+    space = round(space);
 
-        let range = xround((max - min) / 5);
-        min = xround(min);
+    if (max >= 0.1) med = Math.round(med * 100) / 100;
+    else if (max >= 0.01) med = Math.round(med * 1000) / 1000;
+    else med = Math.round(med * 10000) / 10000;
 
-        // Determine the interval
-        let interval = [
-            0,
-            min,
-            min + range,
-            min + range * 2,
-            min + range * 3,
-            min + range * 4,
-            min + range * 5
-        ],
-            col = ['xxs', 'xs', 's', 'm', 'l', 'xl', 'xxl'];
+    let interval = [Math.pow(10, -precision)];
+    for (let i = -2; i <= 3; i++) {
+        let v = med + i * space;
+        if (min <= v && v <= max)
+            interval.push(round(v));
+    }
+    let col = ['xxs', 'xs', 's', 'm', 'l', 'xl', 'xxl']
+        .slice(3 - interval.length / 2, 3 - interval.length / 2 + interval.length);
 
-        return function (val) {
-            if (val === undefined) return interval;
-            for (let i = 1; i <= 6; i++) {
-                if (val < interval[i]) return col[i - 1];
-            }
-            return 'xxl';
-        }
+    // Check zero possibility
+    if ($secTar.find('input:checked').val() !== 'lead'
+        && qdata.some(d => !d.ratio && !d.sratio)) {
+        col.unshift('foul');
+        interval.unshift(0);
     }
 
-    // Order data
-    let k,
-        idToCol = {},
-        numJudger = createNumberJudger(),
-        $maplen = $('#map-legend').empty();
+    return val => {
+        if (val === 0 || val === '0') {
+            return 'foul';
+        }
+        if (val === undefined) {
+            return interval;
+        }
+        if (val === 'list') {
+            return col;
+        }
+        if (val === 'precision') {
+            return precision;
+        }
+        for (let i = interval.length - 1; i >= 0; i--) {
+            if (val >= interval[i]) return col[i];
+        }
+        throw "Internal error";
+    }
+}
+function paintTask(qdata, resOnly, layers, no = -1) {
 
-    qdata.forEach(res => {
-        if (res.vname) k = Math.floor(res.id / 1000) + ',' + res.vname; // village
-        else if (res.ectr && layers[1]) k = res.id + ',' + res.ectr;    // electoral
-        else k = res.id;                                                // town or county
-        let col = Ideo.referToColor(no, res.it == 'o')
-        if (!col) return;
-        idToCol[k] = col[numJudger(res.ratio || res.sratio)];
-    });
+    function getColorByGeo(g) {
+        let key;
+        if (layers.village) {
+            // Check villages
+            if (g.properties.v) {
+                key = `${g.properties.d},${g.properties.v}`;
+                if (key in keyColMap) return keyColMap[key];
+            }
+        }
+        if (layers.town) {
+            key = g.properties.d;
+            if (key in keyColMap) return keyColMap[key];
+        }
+        if (layers.electoral) {
+            key = `${Math.floor(g.properties.d / 100) * 100},${g.properties.e}`;
+            if (key in keyColMap) return keyColMap[key];
+        }
+        if (layers.county) {
+            key = Math.floor(g.properties.d / 100) * 100;
+            if (key in keyColMap) return keyColMap[key];
+        }
+        return null;
+    }
+    function getKeyByDatum(d) {
+        if (d.vname) {
+            // village datum
+            return Math.floor(d.id / 1000) + ',' + d.vname;
+        }
+        if (d.ectr && layers.electoral) {
+            // electoral
+            return d.id + ',' + d.ectr;
+        }
+        // town or county datum          
+        return d.id;
+    }
 
-    // Show legend
-    if (resOnly) {
-        let _for = Ideo.referToColor(no, true)['r'];
-        let against = Ideo.referToColor(no, false)['r'];
-        $maplen.append(`<p><span class="legend-box" style="background:${_for}"></span>贊成</p><p><span class="legend-box" style="background:${against}"></span>反對</p>`)
+    // Create color judger
+    let getColorByDatum,
+        keyColMap = {},
+        sizeJudger = createSizeJudger(qdata, resOnly),
+        parties, icands // Used only in election
+    if (no != -1) {
+        // Referendum
+        getColorByDatum = d => {
+            if (d.it) return Ideo.referToColor(no, d.it === 'o');
+            else return Ideo.referToColor(no, d);
+        }
     }
     else {
-        let clist = ['xxs', 'xs', 's', 'm', 'l', 'xl', 'xxl'];
-        let col = Ideo.referToColor(no, true); // For
-        let $p = $('<p></p>');
-        clist.forEach(c => $p.append($('<span class="legend-box"></span>').css('background', col[c])));
-        $p.append('贊成');
-        $maplen.append($p);
-        col = Ideo.referToColor(no, false); // For
-        $p = $('<p></p>');
-        clist.forEach(c => $p.append($('<span class="legend-box"></span>').css('background', col[c])));
-        $p.append('反對');
-        $maplen.append($p);
-        $p = $('<p></p>');
-        let interval = numJudger();
-        interval.forEach(i => {
-            let compOper = (i !== 0) ? '' : '≤';
-            if (i === 0) i = interval[1];
-            let text = compOper + Math.round(i * 100) + '%',
-                $span = $('<span></span>').addClass('legend-box legend-text').html(text);
-            $p.append($span);
-        })
-        $maplen.append($p)
+        // Election
+        // Get all parties and independent candidates
+        let partySet = new Set(), icandSet = new Set();
+        qdata.forEach(datum => {
+            if (datum.p) partySet.add(datum.p);
+            else icandSet.add(datum.c);
+        });
+        // Sort by their votes (desc)
+        function nParty(party) {
+            return qdata.reduce((sum, d) => d.p === party ? sum + 1 : sum, 0);
+        }
+        function nCand(name) {
+            return qdata.reduce((sum, d) => d.c === name ? sum + 1 : sum, 0);
+        }
+        let n, sorter = (a, b) => n[b] - n[a];
+        parties = Array.from(partySet);
+        n = {};
+        parties.forEach(p => n[p] = nParty(p));
+        parties.sort(sorter);
+        icands = Array.from(icandSet);
+        n = {};
+        icands.forEach(c => n[c] = nCand(c));
+        icands.sort(sorter);
+        let judger = Ideo.createColorJudger(parties, icands);
+        getColorByDatum = d => judger(d.p || d.c || d);
     }
 
-    const keyGenerators = [
-        g => Math.floor(g.properties.d / 100) * 100,
-        g => {
-            if (g.properties.e) return Math.floor(g.properties.d / 100) * 100 + ',' + g.properties.e;
-            else return null;
-        },
-        g => g.properties.d,
-        (function () {
-            if (legis()) {
-                return function (g) {
-                    if (g.properties.v) return `${g.properties.d},${g.properties.v}`;
-                    else return (Math.floor(g.properties.d / 100) * 100) + ',' + g.properties.e;
+    // Create an data-to-color map
+    (function () {
+        let key, col, size,
+            zeroPossible = $secTar.find('input:checked').val() !== 'lead';
+        qdata.forEach(datum => {
+            if (!zeroPossible && !datum.ratio && !datum.sratio) return;
+            key = getKeyByDatum(datum);
+            col = getColorByDatum(datum);
+            size = sizeJudger(datum.ratio || datum.sratio || 0);
+            keyColMap[key] = col[size];
+        });
+    })();
+
+    // Create legend invoker
+    let lgInvoker;
+    (function () {
+        if (resOnly) {
+            if (no != -1) {
+                lgInvoker = function () {
+                    $('#map-legend').empty().append(
+                        `<p><span class="legend-box" style="background:${getColorByDatum(1).r}"></span>贊成</p>
+                         <p><span class="legend-box" style="background:${getColorByDatum(0).r}"></span>反對</p>`
+                    );
                 }
             }
             else {
-                return function (g) {
-                    return g.properties.v ? `${g.properties.d},${g.properties.v}` : g.properties.d;
+                lgInvoker = function () {
+                    let html = parties
+                        .concat(icands)
+                        .map(item => `<p><span class="legend-box" style="background: ${getColorByDatum(item).r}"></span>${item}</p>`)
+                        .join('');
+                    $('#map-legend').empty().append(html);
                 }
             }
-        })()
-    ],
-        smxGr = layers.lastIndexOf(true),
-        getColor = function (g) {
-            let k, col;
-            for (let i = smxGr; i >= 0; i--) {
-                k = keyGenerators[i](g);
-                if (!k) continue;
-                col = idToCol[k];
-                if (col) return col;
-            }
-            return null;
-        }
-
-    // Determine stroker
-    let stroker = function (topo) {
-
-        function county(g) {
-            return Math.floor(g.properties.d / 100) * 100;
-        }
-
-        // village, towns, counties
-        let sv = layers[3] ? topojson.mesh(topo, topo.objects.villages, (a, b) => {
-            return a !== b // distinct
-                && (!layers[2] || a.properties.d === b.properties.d) // same town
-                && (getColor(a) || getColor(b)); // effective
-        }) : null;
-        let st = layers[2] ? topojson.mesh(topo, topo.objects.villages, (a, b) => {
-            return a !== b
-                && a.properties.d !== b.properties.d
-                && (!layers[0] || county(a) === county(b))
-                && (getColor(a) || getColor(b)); // effective
-        }) : null;
-        let se = layers[1] ? topojson.mesh(topo, topo.objects.villages, (a, b) => {
-            return a.properties.e !== b.properties.e;
-        }) : null;
-        let sc = layers[0] ? topojson.mesh(topo, topo.objects.villages, (a, b) => {
-            return a !== b
-                && county(a) !== county(b)
-                && (getColor(a) || getColor(b)); // effective
-        }) : null;
-        let coast = layers[4] ? topojson.mesh(topo, topo.objects.taiwan) : null;
-        return {
-            villages: sv,
-            towns: st,
-            electorals: se,
-            counties: sc,
-            coast: coast
-        }
-    }
-
-    // Determine filler
-    let filler = function (topo) {
-
-        let colToGeo = {}, col;
-        topo.objects.villages.geometries.forEach(g => {
-            col = getColor(g);
-            if (!col) col = 'none';
-            if (!colToGeo[col]) colToGeo[col] = [];
-            colToGeo[col].push(g);
-        });
-
-        let _filler = {};
-        for (let c in colToGeo) _filler[c] = topojson.merge(topo, colToGeo[c]);
-        return _filler;
-    }
-
-    return [filler, stroker];
-
-}
-function layerGrouper(qdata, resOnly, layers) {
-
-    function createNumberJudger() {
-        if (resOnly) return () => 'r';
-        let vals = qdata.map(d => d.ratio || d.sratio);
-        if (vals.length == 1) {
-            return function (val) {
-                if (val === undefined) return [vals[0]];
-                return 'r';
-            }
-        }
-
-        vals.sort((a, b) => a - b);
-        let len = vals.length,
-            min = vals[Math.floor(len * 0.1)],
-            max = vals[Math.floor(len * 0.9)],
-            diff = max - min;
-
-        // Determine the range
-        let xx;
-        if (diff > 0.05) xx = 100;
-        else if (diff > 0.005) xx = 1000;
-        else xx = 10000;
-        function xround(val) {
-            return Math.round(val * xx) / xx;
-        }
-
-        let range = xround((max - min) / 5);
-        min = xround(min);
-
-        // Determine the interval
-        let interval = [
-            0,
-            min,
-            min + range,
-            min + range * 2,
-            min + range * 3,
-            min + range * 4,
-            min + range * 5
-        ],
-            col = ['xxs', 'xs', 's', 'm', 'l', 'xl', 'xxl'];
-
-        return function (val) {
-            if (val === undefined) return interval;
-            for (let i = 1; i <= 6; i++) {
-                if (val < interval[i]) return col[i - 1];
-            }
-            return 'xxl';
-        }
-    }
-
-    // Determine colors
-    let partyset = new Set(qdata.filter(res => res.p).map(res => res.p)),
-        idp = Array.from(new Set(qdata.filter(res => !res.p && (res.id < 2100 || res.id >= 10000 && res.id < 2100000)).map(res => res.c)))
-
-    idp.sort((a, b) => {
-        return qdata.find(res => res.c == a).ratio - qdata.find(res => res.c == b).ratio;
-    })
-    let colorer = new Colorer(partyset, idp).distribute();
-
-    // Order data
-    let k,
-        idToCol = {},
-        numJudger = createNumberJudger(),
-        $maplen = $('#map-legend').empty();
-
-    qdata.forEach(res => {
-        if (res.vname) k = Math.floor(res.id / 1000) + ',' + res.vname; // village
-        else if (res.ectr && layers[1]) k = res.id + ',' + res.ectr;    // electoral
-        else k = res.id;                                                // town or county
-        let col = colorer[res.p || res.c]
-        if (!col) return;
-        idToCol[k] = col[numJudger(res.ratio || res.sratio)];
-    });
-
-
-    // Show legend
-    const parray = Array.from(partyset).sort(Ideo.partyComparator);
-    if (resOnly) {
-        parray.concat(idp).forEach(p => {
-            let $span = $('<span></span>').addClass('legend-box').css('background', colorer[p].r);
-            let $p = $('<p></p>').append($span).append(p || '無黨籍');
-            $maplen.append($p)
-        });
-    }
-    else {
-
-        let interval = numJudger(),
-            ilen = interval.length,
-            cols;
-
-        if (ilen === 1) {
-            cols = ['r'];
         }
         else {
-            let lowb = 3 - Math.floor(ilen / 2),
-                upb = 3 - lowb + ilen;
-            cols = ['xxs', 'xs', 's', 'm', 'l', 'xl', 'xxl'].slice(lowb, upb);
-        }
-
-        let diff = (interval[ilen - 1] - interval[1]) / (ilen - 1),
-            m, per;
-
-        if (ilen === 1) {
-            if (interval[0] >= 0.01) { m = 100; per = '%' }
-            else { m = 1000; per = '‰' }
-        }
-        else if (diff >= 0.01) { m = 100; per = '%' }
-        else { m = 1000; per = '‰' }
-
-        parray.concat(idp).forEach(party => {
-            let $p = $('<p></p>'), $span;
-            cols.forEach(c => {
-                $span = $('<span></span>').addClass('legend-box').css('background', colorer[party][c]);
-                $p.append($span);
-            })
-            $p.append(party || '無黨籍');
-            $maplen.append($p)
-        });
-        let $p = $('<p></p>');
-        interval.forEach(i => {
-            let compOper = (ilen === 1 || i !== 0) ? '' : '≤';
-            if (i === 0) i = interval[1];
-            let text = compOper + Math.round(i * m) + per,
-                $span = $('<span></span>').addClass('legend-box legend-text').html(text);
-            $p.append($span);
-        })
-        $maplen.append($p)
-    }
-
-    const keyGenerators = [
-        g => Math.floor(g.properties.d / 100) * 100,
-        g => {
-            if (g.properties.e) return Math.floor(g.properties.d / 100) * 100 + ',' + g.properties.e;
-            else return null;
-        },
-        g => g.properties.d,
-        (function () {
-            if (legis()) {
-                return function (g) {
-                    if (g.properties.v) return `${g.properties.d},${g.properties.v}`;
-                    else return (Math.floor(g.properties.d / 100) * 100) + ',' + g.properties.e;
+            let legendContainer = $('#map-legend');
+            function appendRatios() {
+                let values = sizeJudger(),
+                    prec = sizeJudger('precision'),
+                    m, per;
+                if (values[1] >= 0.1 || (values[1] >= 0.01 && prec === 2)) {
+                    per = '%';
+                    m = 100;
+                    prec -= 2;
+                }
+                else if (values[1] >= 0.01 || (values[1] >= 0.001 && prec === 3)) {
+                    per = '‰';
+                    m = 1000;
+                    prec -= 3;
+                }
+                else {
+                    per = '‱';
+                    m = 10000;
+                    prec -= 4;
+                }
+                let spaces = values
+                    .map(val => `<span class="legend-box legend-text">${(val * m).toFixed(prec)}${per}</span>`)
+                    .join('');
+                legendContainer.append(`<p>${spaces}</p>`)
+            }
+            function appendLegendBlocks(col, title) {
+                let html = sizeJudger('list')
+                    .map(c => `<span class="legend-box" style="background: ${col[c]}"></span>`)
+                    .join('');
+                legendContainer.append(`<p>${html}${title}</p>`);
+            }
+            if (no != -1) {
+                lgInvoker = function () {
+                    legendContainer.empty();
+                    appendLegendBlocks(getColorByDatum(1), '贊成方');
+                    appendLegendBlocks(getColorByDatum(0), '反對方');
+                    appendRatios();
                 }
             }
             else {
-                return function (g) {
-                    return g.properties.v ? `${g.properties.d},${g.properties.v}` : g.properties.d;
+                let array2 = parties.concat(icands);
+                lgInvoker = function () {
+                    legendContainer.empty();
+                    array2.forEach(item => {
+                        appendLegendBlocks(getColorByDatum(item), item);
+                    });
+                    appendRatios();
                 }
             }
-        })()
-    ],
-        smxGr = layers.lastIndexOf(true),
-        getColor = function (g) {
-            let k, col;
-            for (let i = smxGr; i >= 0; i--) {
-                k = keyGenerators[i](g);
-                if (!k) continue;
-                col = idToCol[k];
-                if (col) return col;
-            }
-            return null;
         }
+    })();
 
-    // Determine stroker
+    // Create stroker and filler
     let stroker = function (topo) {
 
-        function county(g) {
+        function getCidOfGeo(g) {
             return Math.floor(g.properties.d / 100) * 100;
         }
 
-        // village, towns, counties
-        let sv = layers[3] ? topojson.mesh(topo, topo.objects.villages, (a, b) => {
-            return a !== b // distinct
-                && (!layers[2] || a.properties.d === b.properties.d) // same town
-                && (getColor(a) || getColor(b)); // effective
-        }) : null;
-        let st = layers[2] ? topojson.mesh(topo, topo.objects.villages, (a, b) => {
-            return a !== b
-                && a.properties.d !== b.properties.d
-                && (!layers[0] || county(a) === county(b))
-                && (getColor(a) || getColor(b)); // effective
-        }) : null;
-        let se = layers[1] ? topojson.mesh(topo, topo.objects.villages, (a, b) => {
-            return a.properties.e !== b.properties.e;
-        }) : null;
-        let sc = layers[0] ? topojson.mesh(topo, topo.objects.villages, (a, b) => {
-            return a !== b
-                && county(a) !== county(b)
-                && (getColor(a) || getColor(b)); // effective
-        }) : null;
-        let coast = layers[4] ? topojson.mesh(topo, topo.objects.taiwan) : null;
-        return {
-            villages: sv,
-            towns: st,
-            electorals: se,
-            counties: sc,
-            coast: coast
+        let _stroker = {}, filter;
+        if (layers.village) {
+            if (layers.town) {
+                filter = (a, b) => {
+                    return a !== b                                  // Check distinct geo
+                        && a.properties.d === b.properties.d        // Check same town (and same county)
+                        && (getColorByGeo(a) || getColorByGeo(b));  // Check effective geo
+                };
+            }
+            else if (layers.county) {
+                filter = (a, b) => {
+                    return a !== b                                  // Check distinct geo
+                        && getCidOfGeo(a) === getCidOfGeo(b)        // Check same county
+                        && (getColorByGeo(a) || getColorByGeo(b));  // Check effective geo
+                };
+            }
+            else {
+                filter = (a, b) => {
+                    return a !== b                                  // Check distinct geo
+                        && (getColorByGeo(a) || getColorByGeo(b));  // Check effective geo
+                };
+            }
+            _stroker['village'] = topojson.mesh(topo, topo.objects.villages, filter);
         }
-    }
+        if (layers.town) {
+            if (layers.county) {
+                filter = (a, b) => {
+                    return a !== b                                  // Check distinct geo
+                        && a.properties.d !== b.properties.d        // Check distinct geo
+                        && getCidOfGeo(a) === getCidOfGeo(b)        // Check same county
+                        && (getColorByGeo(a) || getColorByGeo(b));  // Check effective geo
+                }
+            }
+            else {
+                filter = (a, b) => {
+                    return a !== b                                  // Check distinct geo
+                        && a.properties.d !== b.properties.d        // Check distinct geo
+                        && (getColorByGeo(a) || getColorByGeo(b));  // Check effective geo
+                }
+            }
+            _stroker['town'] = topojson.mesh(topo, topo.objects.villages, filter);
+        }
+        if (layers.electoral) {
+            _stroker['electoral'] = topojson.mesh(topo, topo.objects.villages, (a, b) => {
+                return a !== b
+                    && a.properties.e !== b.properties.e
+                    && (getColorByGeo(a) || getColorByGeo(b))
+            });
+        }
+        if (layers.county) {
+            _stroker['county'] = topojson.mesh(topo, topo.objects.villages, (a, b) => {
+                return a !== b                              // Check distinct geo
+                    && getCidOfGeo(a) !== getCidOfGeo(b)    // Check distinct geo
+                    && (getColorByGeo(a) || getColorByGeo(b));        // Check effective geo            
+            });
+        }
+        if (layers.coast) {
+            _stroker['coast'] = topojson.mesh(topo, topo.objects.taiwan);
+        }
 
-    // Determine filler
+        return _stroker;
+    }
     let filler = function (topo) {
 
-        let colToGeo = {}, col;
+        let colGeoMap = {}, col;
         topo.objects.villages.geometries.forEach(g => {
-            col = getColor(g);
-            if (!col) col = 'none';
-            if (!colToGeo[col]) colToGeo[col] = [];
-            colToGeo[col].push(g);
+            col = getColorByGeo(g);
+            if (!col) col = 'none';                         // This geo is not involved in this query
+            if (!(col in colGeoMap)) colGeoMap[col] = [];   // Init
+            colGeoMap[col].push(g);
         });
 
         let _filler = {};
-        for (let c in colToGeo) _filler[c] = topojson.merge(topo, colToGeo[c]);
+        for (let c in colGeoMap) {
+            _filler[c] = topojson.merge(topo, colGeoMap[c]);
+        }
         return _filler;
     }
 
-    return [filler, stroker];
+    return {
+        filler: filler,
+        stroker: stroker,
+        legendInvoker: lgInvoker
+    };
 }
-function queryData(cb) {
-    let prm = $.param(qObject());
-    $.get(($eEvent.val() == 'refer' ? '/rq?' : '/q?') + prm, cb);
-    console.log(prm);
+async function queryData() {
+    return new Promise((res, rej) => {
+        let type = $eEvent.val() == 'refer' ? 'referendum' : 'election',
+            prm = $.param(qObject(type)),
+            url = (type == 'referendum' ? '/rq?' : '/q?') + prm;
+        console.log(url);
+        $.get(url).done(res).fail(rej);
+    });
 }
-function qObject() {
+function qObject(type) {
 
-    // Referendum
-    if ($eEvent.val() == 'refer') {
+    if (type === 'referendum') {
         return {
             granule: $granule.val(),
             area: areaCode(),
@@ -528,16 +454,16 @@ function qObject() {
             queried: $colored.find('input:checked').val() == 'strict' ? 'sratio' : 'ratio'
         }
     }
-
-    // Election
-    let $event = $eEvent.find('option:selected');
-    return {
-        year: $event.attr('year'),
-        tbName: $event.attr('tbName'),
-        area: areaCode(),
-        granule: $granule.val(),
-        no: no(),
-        queried: $colored.find('input:checked').val() == 'strict' ? 'sratio' : 'ratio'
+    else {
+        let $event = $eEvent.find('option:selected');
+        return {
+            year: $event.attr('year'),
+            tbName: $event.attr('tbName'),
+            area: areaCode(),
+            granule: $granule.val(),
+            no: no(),
+            queried: $colored.find('input:checked').val() == 'strict' ? 'sratio' : 'ratio'
+        }
     }
 }
 function areaCode() {
@@ -564,34 +490,53 @@ function layersJudger() {
     let g = $granule.val();
     if (legis()) {
         switch (g) {
-            case 'v': return [false, true, false, true];
-            case 'd': return [false, true, true];
-            case 'e': return [false, true];
+            case 'v':
+                return {
+                    village: true,
+                    electoral: true
+                }
+            case 'e':
+                return {
+                    electoral: true
+                }
+            default: throw 'Invalid granule: ' + g;
         }
     }
     else {
         switch (g) {
-            case 'v': return [$secTown.val() == 0, false, true, true];
-            case 'd': return [$secTown.val() == 0, false, true];
-            case 'c': return [true];
+            case 'v':
+                return {
+                    county: $secTown.val() == 0,
+                    town: true,
+                    village: true
+                }
+            case 'd':
+                return {
+                    county: $secTown.val() == 0,
+                    town: true,
+                }
+            case 'c':
+                return {
+                    county: true
+                }
+            default: throw 'Invalid granule: ' + g;
         }
     }
-    throw "Inner error."
 }
 async function drawMap(data) {
 
-    data = JSON.parse(data);
-
-    let one = $colored.find('input:checked').val() == 'one',
-        grouper = $eEvent.val() == 'refer' ? referLayerGrouper(data, one, layersJudger(), $eRefer.val()) : layerGrouper(data, one, layersJudger()),
-        filler = grouper[0],
-        stroker = grouper[1],
-        n = grouper[2],
+    let resOnly = $colored.find('input:checked').val() === 'one',
+        lj = layersJudger(),
+        referNo = $eEvent.val() === 'refer' ? $eRefer.val() : -1,
+        grouper = paintTask(data, resOnly, lj, referNo),
+        filler = grouper.filler,
+        stroker = grouper.stroker,
         map = new Map(mapContainer);
 
     // Show map on the screen
-    await map.setLayerAndDraw(filler, stroker, styler, n);
-
+    await map.setLayerAndDraw(filler, stroker, styler);
+    // Show legend
+    grouper.legendInvoker();
     // Register follower
     regFollower(map, $granule.val(), data);
 }
@@ -647,7 +592,7 @@ function styler(k, ctx, scale, isStroke) {
         return true;
     }
     switch (k) {
-        case 'villages':
+        case 'village':
             if (scale < 5) return false;
             ctx.lineWidth = scale < 20 ? 0.5 : scale / 20 * 0.5;
             ctx.strokeStyle = 'white';
@@ -655,15 +600,15 @@ function styler(k, ctx, scale, isStroke) {
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             return true;
-        case 'towns':
+        case 'town':
             ctx.lineWidth = scale < 12 ? 0.85 : scale / 12 * 0.85;
             ctx.strokeStyle = 'white';
             ctx.setLineDash([]);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             return true;
-        case 'counties':
-        case 'electorals':
+        case 'county':
+        case 'electoral':
             ctx.lineWidth = scale < 4 ? 1.5 : scale / 4 * 1.5;
             ctx.strokeStyle = 'black';
             ctx.setLineDash([]);
