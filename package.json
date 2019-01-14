@@ -1,12 +1,6 @@
 {
-  "name": "taiwan-election",
-  "version": "1.0.0",
-  "description": "My NCTU project.",
-  "main": "server.js",
-  "author": "Hyperbola",
-  "license": "ISC",
-  "dependencies": {
-    "express": "^4.16.4",
-    "mysql": "^2.16.0"
-  }
+    "name": "data_visualization",
+    "version": "1.0.0",
+    "description": "NCTU Project",
+    "main": "server.js"
 }
