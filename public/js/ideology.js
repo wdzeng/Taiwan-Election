@@ -127,7 +127,7 @@ const parColMap = {
 
 export function createColorJudger(parties, icands, grey = true) {
 
-    let colors = [GREEN, BLUE, RED, YELLOW, PURPLE, ORANGE, PINK, PEACH, CYAN],
+    let pColors = [GREEN, BLUE, RED, YELLOW, PURPLE, ORANGE, PINK, PEACH, CYAN],
         last = CYAN,
         map = {};
 
@@ -137,29 +137,87 @@ export function createColorJudger(parties, icands, grey = true) {
         // Get default order of colors of this party
         let pcolors = parColMap[party];
         // If this party is not famous, use default color list
-        if (!pcolors) pcolors = colors;
+        if (!pcolors) pcolors = pColors;
         // Find the first color that exists in the remaining colors
         for (let col of pcolors) {
-            let index = colors.indexOf(col);
+            let index = pColors.indexOf(col);
             if (index != -1) {
                 map[party] = col;
-                colors.splice(index, 1);
+                pColors.splice(index, 1);
                 break;
             }
         }
         // If not found, use the first color in the remainings
         if (!map[party]) {
-            map[party] = colors[0] || last;
-            colors.shift();
+            map[party] = pColors[0] || last;
+            pColors.shift();
         }
     }
 
     // Determine colors of independent candidates
+    let cColors = [RED, PURPLE, YELLOW, ORANGE, PINK, PEACH, CYAN, BLUE, GREEN].filter(c => pColors.indexOf(c) != -1);
     if (grey) last = GREY;
     for (let name of icands) {
-        map[name] = colors[0] || last;
-        colors.shift();
+        map[name] = cColors[0] || last;
+        pColors.shift();
     }
 
     return flag => map[flag];
+}
+
+export function getStandardName(party) {
+    party = party.toUpperCase();
+    switch (party) {
+        case '中國':
+        case '中國黨':
+        case '國民黨':
+        case 'KMT':
+            return '中國國民黨';
+        case '民進黨':
+        case 'DPP':
+            return '民主進步黨';
+        case '時代力量黨':
+        case '時力':
+        case '時力黨':
+        case '時代':
+        case 'NPP':
+            return '時代力量';
+        case 'GPT':
+            return '綠黨';
+        case '社民黨':
+        case 'SDP':
+            return '社會民主黨';
+        case '綠社盟':
+            return '綠黨社會民主黨聯盟';
+        case '無黨團':
+            return '無黨團結聯盟';
+        case '統促黨':
+            return '中華統一促進黨';
+        case '台聯':
+        case '臺聯':
+        case '台聯黨':
+        case '臺聯黨':
+        case '臺灣團結聯盟':
+        case 'TSU':
+            return '台灣團結聯盟';
+        case '信望盟':
+        case '護家盟':
+        case '幸福盟':
+            return '信心希望聯盟';
+    }
+    return party;
+}
+
+export function getCommomName(party) {
+    switch (getStandardName(party)) {
+        case '中國國民黨': return '國民黨';
+        case '民主進步黨': return '民進黨';
+        case '台灣團結聯盟': return '台聯';
+        case '無黨團結聯盟': return '無黨團';
+        case '綠黨社會民主黨聯盟': return '綠社盟';
+        case '社會民主黨': return '社民黨';
+        case '信心希望聯盟': return '信望盟';
+        case '中華統一促進黨': return '統促黨';
+    }
+    return party;
 }

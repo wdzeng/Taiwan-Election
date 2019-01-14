@@ -111,12 +111,16 @@ $('#draw').click(async () => {
     drawMap(qdata);
 });
 
-function createSizeJudger(qdata, resOnly) {
-    let one = function (val) {
-        if (val === undefined) return [vals[0]];
-        return 'r';
+function createSizeJudger(qdata) {
+    if (qdata.length === 1) {
+        let v = qdata[0].ratio || qdata[0].sratio;
+        return val => {
+            if (val === undefined) return [v];
+            if (val === 'list') return ['r'];
+            if (val === 'prec') return 0;
+            return 'r';
+        }
     }
-    if (resOnly || qdata.length === 1) return one;
 
     // Deal with multiple colors
     let vals = qdata
@@ -148,7 +152,7 @@ function createSizeJudger(qdata, resOnly) {
             interval.push(round(v));
     }
     let col = ['xxs', 'xs', 's', 'm', 'l', 'xl', 'xxl']
-        .slice(3 - interval.length / 2, 3 - interval.length / 2 + interval.length);
+        .slice(3 - Math.floor(interval.length / 2), 3 - Math.floor(interval.length / 2) + interval.length);
 
     // Check zero possibility
     if ($secTar.find('input:checked').val() !== 'lead'
@@ -173,7 +177,7 @@ function createSizeJudger(qdata, resOnly) {
         for (let i = interval.length - 1; i >= 0; i--) {
             if (val >= interval[i]) return col[i];
         }
-        throw "Internal error";
+        return col[0];
     }
 }
 function paintTask(qdata, resOnly, layers, no = -1) {
@@ -283,18 +287,42 @@ function paintTask(qdata, resOnly, layers, no = -1) {
                 lgInvoker = function () {
                     let html = parties
                         .concat(icands)
-                        .map(item => `<p><span class="legend-box" style="background: ${getColorByDatum(item).r}"></span>${item}</p>`)
+                        .map(item =>
+                            `<p>
+                                <span class="legend-box" style="background: ${getColorByDatum(item).r}"></span>
+                                ${Ideo.getCommomName(item)}
+                            </p>`
+                        )
                         .join('');
                     $('#map-legend').empty().append(html);
                 }
             }
         }
         else {
-            let legendContainer = $('#map-legend');
+            let legendContainer = $('#map-legend'), per;
             function appendRatios() {
-                let values = sizeJudger(),
-                    prec = sizeJudger('precision'),
-                    m, per;
+                let values = sizeJudger();
+                if (values.length == 1) {
+                    let val;
+                    if (values[0] >= 0.01) {
+                        per = '%';
+                        val = values[0] * 100;
+                    }
+                    else if (values[0] >= 0.001) {
+                        per = '‰';
+                        val = values[0] * 1000;
+                    }
+                    else {
+                        per = '‱';
+                        val = values[0] * 10000;
+                    }
+                    val = Math.round(val * 100) / 100;
+                    legendContainer.append(`<p><span class="legend-box legend-text">${val}${per}</span></p>`);
+                    return;
+                }
+
+                let prec = sizeJudger('precision'),
+                    m;
                 if (values[1] >= 0.1 || (values[1] >= 0.01 && prec === 2)) {
                     per = '%';
                     m = 100;
@@ -334,7 +362,7 @@ function paintTask(qdata, resOnly, layers, no = -1) {
                 lgInvoker = function () {
                     legendContainer.empty();
                     array2.forEach(item => {
-                        appendLegendBlocks(getColorByDatum(item), item);
+                        appendLegendBlocks(getColorByDatum(item), Ideo.getCommomName(item));
                     });
                     appendRatios();
                 }
@@ -484,7 +512,7 @@ function areaCode() {
 }
 function no() {
     let selected = $secTar.find('input:checked').val();
-    return selected == 'other' ? $txtCus.val() : selected;
+    return selected == 'other' ? Ideo.getStandardName($txtCus.val()) : selected;
 }
 function layersJudger() {
     let g = $granule.val();
