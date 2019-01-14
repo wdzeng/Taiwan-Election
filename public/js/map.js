@@ -175,7 +175,7 @@ let loadMap = (function () {
 
     function readMap() {
         return new Promise((resolve) => {
-            d3.json('/res/map20.json').then(topo => resolve(topo));
+            $.getJSON('/res/map20.json').done(topo => resolve(topo));
         });
     }
 
