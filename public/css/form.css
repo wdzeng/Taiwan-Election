@@ -1,0 +1,15 @@
+div.form.e-only *:not(option).r-only {
+    display: none;
+}
+
+div.form.r-only *:not(option).e-only {
+    display: none;
+}
+
+div.form.nlg-only *:not(option).leg-only {
+    display: none;
+}
+
+div.form.leg-only *:not(option).nlg-only {
+    display: none;
+}

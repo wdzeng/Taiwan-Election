@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- Import JQuery -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!-- Import TopoJSON -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
+    crossorigin="anonymous">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="./form.css">
+
+</head>
+
+<body>
+
+  <header>
+    <div class="container">
+      <nav class="navbar navbar-expand-lg navbar-light">
+        <a class="navbar-brand" href="#">台灣選舉與地理資料視覺化</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+          aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+    </nav>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="container">
+        <div class="row">
+
+          <div class="col-lg-6 form nlg-only e-only" id="form1">
+            <!-- Nav tabs -->
+            <ul class="nav nav-tabs">
+              <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#election">選舉</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link disabled" data-toggle="tab">戶口</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link disabled" data-toggle="tab">自然</a>
+              </li>
+            </ul>
+
+            <!-- Tab panes -->
+            <div class="tab-content">
+              <div class="tab-pane container active election" style="padding-top: 18px; height:100%">
+
+                <div class="form-group row">
+                  <label class="col-md-3 col-form-label">選舉條目</label>
+                  <div class="col-md-9 input-group">
+                    <select class="form-control sec-election">
+                      <option value="2008-leg">2008 區域立委選舉</option>
+                      <option value="2008-par">2008 不分區立委選舉</option>
+                      <option value="2008-prs">2008 總統選舉</option>
+                      <option value="2009-lcl">2009 地方選舉</option>
+                      <option value="2010-lcl">2010 五都選舉</option>
+                      <option value="2012-leg">2012 區域立委選舉</option>
+                      <option value="2012-par">2012 不分區立委選舉</option>
+                      <option value="2012-prs">2012 總統選舉</option>
+                      <option value="2014-lcl">2014 地方選舉</option>
+                      <option value="2016-leg">2016 區域立委選舉</option>
+                      <option value="2016-par">2016 不分區立委選舉</option>
+                      <option value="2016-prs">2016 總統選舉</option>
+                      <option value="2018-lcl" selected>2018 地方選舉</option>
+                      <option value="2018-ref">2018 全國公投</option>
+                    </select>
+                    <select class="form-control r-only sec-referendum">
+                      <option value="07">07 反空汙公投</option>
+                      <option value="08">08 反深澳公投</option>
+                      <option value="09">09 反核食公投</option>
+                      <option value="10">10 反婚姻平權公投</option>
+                      <option value="11">11 反性平教育公投</option>
+                      <option value="12">12 反同專法公投</option>
+                      <option value="13">13 東奧正名公投</option>
+                      <option value="14">14 婚姻平權公投</option>
+                      <option value="15">15 性平教育公投</option>
+                      <option value="16">16 擁核公投</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group row">
+                  <label class="col-md-3 col-form-label">查詢範圍</label>
+                  <div class="col-md-9 input-group">
+                    <select class="form-control sec-county">
+                      <option value="0000" selected>全國</option>
+                      <option value="0700">基隆市</option>
+                      <option value="0100">台北市</option>
+                      <option value="0200">新北市</option>
+                      <option value="0300">桃園市</option>
+                      <option value="1000">新竹縣</option>
+                      <option value="0800">新竹市</option>
+                      <option value="1100">苗栗縣</option>
+                      <option value="0400">台中市</option>
+                      <option value="1300">南投縣</option>
+                      <option value="1200">彰化縣</option>
+                      <option value="1400">雲林縣</option>
+                      <option value="1500">嘉義縣</option>
+                      <option value="0900">嘉義市</option>
+                      <option value="0500">台南市</option>
+                      <option value="0600">高雄市</option>
+                      <option value="1600">屏東縣</option>
+                      <option value="1700">宜蘭縣</option>
+                      <option value="1800">花蓮縣</option>
+                      <option value="1900">台東縣</option>
+                      <option value="2000">澎湖縣</option>
+                    </select>
+                    <select class="form-control leg-only sec-ectr">
+                      <option selected value="0">全境</option>
+                    </select>
+                    <select class="form-control nlg-only sec-town">
+                      <option selected value="0">全境</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group row">
+                  <label class="col-md-3 col-form-label">顆粒粗細</label>
+                  <div class="col-md-9">
+                    <select class="form-control sec-granule">
+                      <option value="c">縣市</option>
+                      <option value="e" class="leg-only">選區</option>
+                      <option value="d" class="nlg-only" selected>鄉鎮市區</option>
+                      <option value="v">村里</option>
+                    </select>
+                  </div>
+                </div>
+
+                <fieldset class="search-target">
+                  <div class="form-group row">
+                    <legend class="col-md-3 col-form-label">查詢對象</legend>
+                    <div class="col-md-9">
+                      <div class="form-check form-check-inline py-2">
+                        <input class="form-check-input" name="search-target" type="radio" value="lead" checked>
+                        <label class="form-check-label">
+                          <span class="e-only">領先者</span>
+                          <span class="r-only">領先方</span>
+                        </label>
+                      </div>
+                      <div class="form-check form-check-inline py-2">
+                        <input class="form-check-input" name="search-target" type="radio" value="elect">
+                        <label class="form-check-label">
+                          <span class="e-only">當選者</span>
+                          <span class="r-only">勝方</span>
+                        </label>
+                      </div>
+                      <div class="form-check form-check-inline py-2 r-only">
+                        <input class="form-check-input" name="search-target" type="radio" value="for">
+                        <label class="form-check-label">正方</label>
+                      </div>
+                      <div class="form-check form-check-inline py-2 r-only">
+                        <input class="form-check-input" name="search_target" type="radio" value="against">
+                        <label class="form-check-label">反方</label>
+                      </div>
+                      <br />
+                      <div class="form-check form-check-inline e-only" style="width: 100%">
+                        <input class="form-check-input rad-custom" name="search-target" type="radio" value="other">
+                        <input disabled class="form-control txt-custom" style="width:100%" type="text" placeholder="搜尋特定政黨名稱或候選人" />
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
+
+                <fieldset class="coloring">
+                  <div class="form-group row">
+                    <legend for="searched" class="col-md-3 col-form-label">套色選項</legend>
+                    <div class="col-md-9">
+                      <div class="form-check form-check-inline py-2">
+                        <input class="form-check-input" name="coloring" type="radio" value="one" checked>
+                        <label class="form-check-label">單一結果</label>
+                      </div>
+                      <div class="form-check form-check-inline py-2">
+                        <input class="form-check-input" name="coloring" type="radio" value="soft">
+                        <label class="form-check-label">表得票率</label>
+                      </div>
+                      <div class="form-check form-check-inline py-2">
+                        <input class="form-check-input" name="coloring" type="radio" value="strict">
+                        <label class="form-check-label">裏得票率</label>
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
+
+                <div class="form-group row" style="height: 100%">
+                  <div class="col-12">
+                    <button id="draw" class="float-right btn btn-outline-secondary" style="width: 30%">Draw</button>
+                  </div>
+                </div>
+
+              </div>
+              <!-- election tab -->
+            </div>
+            <!-- tabs -->
+          </div>
+          <!-- form1 -->
+        </div>
+        <!-- row -->
+      </div>
+      <!-- container -->
+    </section>
+  </main>
+
+  <footer>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
+    crossorigin="anonymous"></script>
+  <script type="module">
+    import * as FormController from "./form-control2.js";
+    FormController.initFormGroup($("#form1"));
+  </script>
+</body>
+
+</html>
