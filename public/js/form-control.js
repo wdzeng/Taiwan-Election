@@ -1,6 +1,40 @@
 import * as Leg from "/js/tw-leg-ectr.js";
 import * as Town from "/js/tw-town.js";
 
+/** 
+ * Please follow the belowing html rules.
+ *  
+ * Dropdowns
+ *   Election dropdown   .sec-election
+ *     |- Legislator election options               [value="YYYY-leg]   
+ *     |- President election options options        [value="YYYY-prs]   
+ *     |- Party listed legislator election options  [value="YYYY-par]   
+ *     |- Local election options                    [value="YYYY-lcl]   
+ *     |- Refernedum options                        [value="2018-ref]   
+ *   Referendum dropdown .sec-referenum  .r-only
+ *   County dropdown     .sec-county
+ *   Electoral dropdown  .sec-electoral  .leg-only
+ *   Town dropdown       .sec-town       .nlg-only
+ *   Granule             .sec-granule
+ *     |- county     [value="c"]
+ *     |- electoral  [value="e"]         .leg-only
+ *     |- town       [value="d"]         .nlg-only
+ *     |- village    [value="v"]
+ * 
+ * Radio groups
+ *   [name="search-target"]
+ *      leader   [value="lead"]
+ *      elect    [value="elect"]
+ *      for      [value="for"]           .r-only
+ *      agaisnt  [value="against"]       .r-only
+ *      custom   [value="other"]         .e-only
+ *         textarea  .txt-custom         .e-only
+ *   [name="coloring"]
+ *      one           [value="one"]
+ *      soft ratio    [value="soft"]
+ *      strict ratio  [value="strict"]
+ */
+
 export function initFormGroup($g) {
 
     /* Referendum and legislator selection mode check */
